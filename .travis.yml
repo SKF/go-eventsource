@@ -1,0 +1,7 @@
+language: go
+sudo: false
+before_script:
+  - go vet ./...
+before_install:
+  - curl https://glide.sh/get | sh
+  - glide install

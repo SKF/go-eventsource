@@ -7,3 +7,5 @@ import:
   - aws/session
   - service/dynamodb
   - service/dynamodb/dynamodbattribute
+- package: github.com/sirupsen/logrus
+  version: ^1.0.5

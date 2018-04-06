@@ -1,12 +1,11 @@
 package dynamodbstore
 
 import (
-	"log"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/SKF/go-eventsource/eventsource"
 )
@@ -40,32 +39,44 @@ func (store *store) Save(record eventsource.Record) (err error) {
 }
 
 //Load ...
-func (store *store) Load(aggregateID string) (evt []eventsource.Record, err error) {
-	records := []eventsource.Record{}
+func (store *store) Load(aggregateID string) (records []eventsource.Record, err error) {
+	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{
 		":id": &dynamodb.AttributeValue{S: &aggregateID},
 	}
 
-	var uerr error
-	err = store.db.ScanPages(&dynamodb.ScanInput{
+	input := dynamodb.ScanInput{
 		TableName:                 &store.tableName,
 		FilterExpression:          aws.String("aggregateId = :id"),
 		ExpressionAttributeValues: key,
-	}, func(page *dynamodb.ScanOutput, last bool) bool {
+	}
+
+	var uerr error
+	pageFunc := func(page *dynamodb.ScanOutput, last bool) bool {
 		recs := []eventsource.Record{}
 		uerr = dynamodbattribute.UnmarshalListOfMaps(page.Items, &recs)
-		if err != nil {
-			log.Printf("Error unmarshal list: %+v", err)
+		if uerr != nil {
+			log.
+				WithField("error", err).
+				Error("Couldn't unmarshal list of maps")
 			return false
 		}
 
 		records = append(records, recs...)
 		return true // to keep paging
-	})
+	}
+
+	if err = store.db.ScanPages(&input, pageFunc); err != nil {
+		log.
+			WithField("input", input).
+			WithField("error", err).
+			Error("Couldn't scan pages")
+		return
+	}
 
 	if uerr != nil {
 		return records, uerr
 	}
 
-	return records, err
+	return
 }

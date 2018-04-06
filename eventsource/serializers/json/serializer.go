@@ -43,8 +43,9 @@ func (s *serializer) Unmarshal(data []byte, eventType string) (out eventsource.E
 		return
 	}
 
-	if out, ok = event.(eventsource.Event); !ok {
-		err = fmt.Errorf("Event doesnt implement Event")
+	out, ok = reflect.ValueOf(event).Elem().Interface().(eventsource.Event)
+	if !ok {
+		err = fmt.Errorf("Event doesn't implement Event")
 		return
 	}
 

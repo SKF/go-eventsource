@@ -1,4 +1,4 @@
-package: github.com/skf/go-eventsource
+package: github.com/SKF/go-eventsource
 import:
 - package: github.com/aws/aws-sdk-go
   version: ^1.13.29

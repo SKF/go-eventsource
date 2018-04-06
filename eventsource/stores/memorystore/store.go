@@ -3,7 +3,7 @@ package memorystore
 import (
 	"errors"
 
-	"github.com/skf/go-eventsource/eventsource"
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 type store struct {

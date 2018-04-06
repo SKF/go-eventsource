@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/skf/go-eventsource/eventsource"
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 // JSONSerializer ...

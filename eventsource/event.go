@@ -8,8 +8,8 @@ type Event interface {
 
 // BaseEvent ...
 type BaseEvent struct {
-	AggregateID string
-	UserID      string
+	AggregateID string `json:"aggregateId"`
+	UserID      string `json:"userId"`
 }
 
 // GetAggregateID ...

@@ -107,7 +107,7 @@ func (repo repository) Load(aggregateID string) (aggr Aggregate, err error) {
 			return
 		}
 
-		if err = aggr.On(event); err.Error() == ErrDeleted.Error() {
+		if err = aggr.On(event); err == ErrDeleted {
 			return nil, nil
 		} else if err != nil {
 			return

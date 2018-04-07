@@ -1,17 +1,19 @@
 # Introduction 
 go-eventsource is a package for building an Event Store
 
+The package is under development and the interfaces may change.
+
 [Event Sourcing Basics](http://eventstore.org.s3-website.eu-west-2.amazonaws.com/docs/event-sourcing-basics)
 
 # How to use it
 To create a new repository:
-`NewRepository(store, aggregate, serializer)`
+`NewRepository(store, serializer)`
 
 It has an interface for saving events and loading an aggregate.
 ```
 type Repository interface {
 	Save(events ...Event) (error)
-	Load(id string) (Aggregate, error)
+	Load(id string, aggr Aggregate) (error)
 }
 ```
 

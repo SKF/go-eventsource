@@ -9,7 +9,7 @@ import (
 // Store ...
 type Store interface {
 	Save(record Record) error
-	Load(aggregateID string) (record []Record, err error)
+	Load(id string) (record []Record, err error)
 }
 
 // Aggregate ...
@@ -26,15 +26,14 @@ type Serializer interface {
 // Repository ...
 type Repository interface {
 	Save(events ...Event) (err error)
-	Load(aggregateID string) (aggr Aggregate, err error)
+	Load(id string, aggr Aggregate) (err error)
 }
 
 // NewRepository ...
-func NewRepository(store Store, aggregate Aggregate, serializer Serializer) Repository {
+func NewRepository(store Store, serializer Serializer) Repository {
 	return &repository{
-		store:         store,
-		aggregateType: getTypeOfValue(aggregate),
-		serializer:    serializer,
+		store:      store,
+		serializer: serializer,
 	}
 }
 
@@ -49,9 +48,8 @@ type Record struct {
 
 // repository ...
 type repository struct {
-	store         Store
-	aggregateType reflect.Type
-	serializer    Serializer
+	store      Store
+	serializer Serializer
 }
 
 func getTypeOfValue(input interface{}) reflect.Type {
@@ -88,18 +86,17 @@ func (repo *repository) Save(events ...Event) (err error) {
 var ErrDeleted = errors.New("Not found (was deleted)")
 
 // Load ...
-func (repo repository) Load(aggregateID string) (aggr Aggregate, err error) {
-	history, err := repo.store.Load(aggregateID)
+func (repo repository) Load(id string, aggr Aggregate) (err error) {
+	history, err := repo.store.Load(id)
 	if err != nil {
 		return
 	}
 
 	if len(history) == 0 {
-		return aggr, errors.New("No history found")
+		return errors.New("No history found")
 	}
 
-	aggr = reflect.New(repo.aggregateType).Interface().(Aggregate)
-	aggr.SetAggregateID(aggregateID)
+	aggr.SetAggregateID(id)
 
 	for _, record := range history {
 		var event Event
@@ -108,7 +105,8 @@ func (repo repository) Load(aggregateID string) (aggr Aggregate, err error) {
 		}
 
 		if err = aggr.On(event); err == ErrDeleted {
-			return nil, nil
+			aggr = nil
+			return nil
 		} else if err != nil {
 			return
 		}

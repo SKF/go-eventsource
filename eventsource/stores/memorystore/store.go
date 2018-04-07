@@ -29,8 +29,8 @@ func (mem *store) Save(record eventsource.Record) error {
 }
 
 // Load ...
-func (mem *store) Load(aggregateID string) (evt []eventsource.Record, err error) {
-	if rows, ok := mem.Data[aggregateID]; ok {
+func (mem *store) Load(id string) (evt []eventsource.Record, err error) {
+	if rows, ok := mem.Data[id]; ok {
 		return rows, nil
 	}
 	return evt, errors.New("Not found")

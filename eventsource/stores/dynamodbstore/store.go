@@ -39,10 +39,10 @@ func (store *store) Save(record eventsource.Record) (err error) {
 }
 
 //Load ...
-func (store *store) Load(aggregateID string) (records []eventsource.Record, err error) {
+func (store *store) Load(id string) (records []eventsource.Record, err error) {
 	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{
-		":id": &dynamodb.AttributeValue{S: &aggregateID},
+		":id": &dynamodb.AttributeValue{S: &id},
 	}
 
 	input := dynamodb.ScanInput{

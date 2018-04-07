@@ -4,6 +4,9 @@
 *.so
 *.dylib
 
+# macOS
+.DS_Store
+
 # Test binary, build with `go test -c`
 *.test
 
@@ -11,4 +14,6 @@
 *.out
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
-.glide/
+.glide
+vendor
+glide.lock

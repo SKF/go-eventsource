@@ -13,4 +13,4 @@ testImport:
 - package: github.com/stretchr/testify
   version: ^1.2.1
   subpackages:
-- assert
+  - assert

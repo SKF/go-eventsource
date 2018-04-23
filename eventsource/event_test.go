@@ -1,5 +1,6 @@
 package eventsource
-import(
+
+import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -7,16 +8,16 @@ import(
 
 var e Event = &BaseEvent{}
 
-func Test_GetAggregatedID(t *testing.T){
-	var aggId = "123"
-	var testEvent = BaseEvent{aggId, "dontcare"}
-	assert.Equal(t, aggId, testEvent.GetAggregateID())
+func Test_GetAggregatedID(t *testing.T) {
+	var aggID = "123"
+	var testEvent = BaseEvent{aggID, "dontcare"}
+	assert.Equal(t, aggID, testEvent.GetAggregateID())
 	assert.Equal(t, testEvent.AggregateID, testEvent.GetAggregateID())
 }
 
-func Test_GetUserID(t *testing.T){
-	var userId = "testUser"
-	var testEvent = BaseEvent{"dontcare", userId}
-	assert.Equal(t, userId, testEvent.GetUserID())
+func Test_GetUserID(t *testing.T) {
+	var userID = "testUser"
+	var testEvent = BaseEvent{"dontcare", userID}
+	assert.Equal(t, userID, testEvent.GetUserID())
 	assert.Equal(t, testEvent.UserID, testEvent.GetUserID())
 }

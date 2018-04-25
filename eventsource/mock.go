@@ -19,20 +19,20 @@ type storeMock struct {
 	*mock.Mock
 }
 
-//CreateSerializerMock create object
+//CreateStoreMock create object
 func CreateStoreMock() *storeMock {
 	return &storeMock{
 		Mock: &mock.Mock{},
 	}
 }
 
-type aggrMock struct {
+type aggregatorMock struct {
 	Mock *mock.Mock
 }
 
-//CreateSerializerMock create object
-func CreateAggrMock() *aggrMock {
-	return &aggrMock{
+//CreateAggregatorMock create object
+func CreateAggregatorMock() *aggregatorMock {
+	return &aggregatorMock{
 		Mock: &mock.Mock{},
 	}
 }
@@ -56,11 +56,11 @@ func (o storeMock) Load(id string) (record []Record, err error) {
 	return args.Get(0).([]Record), args.Error(1)
 }
 
-func (o aggrMock) On(event Event) error {
+func (o aggregatorMock) On(event Event) error {
 	args := o.Mock.Called(event)
 	return args.Error(0)
 }
 
-func (o aggrMock) SetAggregateID(id string) {
+func (o aggregatorMock) SetAggregateID(id string) {
 
 }

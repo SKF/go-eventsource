@@ -11,7 +11,7 @@ import (
 
 func createMockHistory() Record {
 	return Record{
-		Data: []byte{},
+		Data: []byte{byte(3)},
 		Type: "mockType",
 	}
 }
@@ -29,24 +29,28 @@ func createMockDataForSave() (testEvent Event, testData []byte) {
 	return
 }
 
-func setupMocks() (storeMock *storeMock, serializerMock *serializerMock, aggrMock *aggrMock) {
+func setupMocks() (storeMock *storeMock, serializerMock *serializerMock, aggregatorMock *aggregatorMock) {
 	storeMock = CreateStoreMock()
 	serializerMock = CreateSerializerMock()
-	aggrMock = CreateAggrMock()
+	aggregatorMock = CreateAggregatorMock()
 	return
 }
 
-func Test_RepoLoadSucess(t *testing.T) {
+func Test_RepoLoadSuccess(t *testing.T) {
 	storeMock, serializerMock, aggregatorMock := setupMocks()
 
 	history, baseEvent, id := createMockDataForLoad()
 
 	storeMock.On("Load", id).Return(history, nil)
-	serializerMock.On("Unmarshal", []byte{}, "mockType").Return(baseEvent, nil)
+	serializerMock.On("Unmarshal", []byte{byte(3)}, "mockType").Return(baseEvent, nil)
 	aggregatorMock.Mock.On("On", baseEvent).Return(nil)
 
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Load(id, aggregatorMock)
+
+	aggregatorMock.Mock.AssertExpectations(t)
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
 
 }
@@ -57,15 +61,14 @@ func Test_RepoLoadFail_NoHistory(t *testing.T) {
 	expectedError := errors.New("No history found")
 
 	history := []Record{}
-	_, baseEvent, id := createMockDataForLoad()
+	_, _, id := createMockDataForLoad()
 
 	storeMock.On("Load", id).Return(history, nil)
-	serializerMock.On("Unmarshal", []byte{}, "mockType").Return(baseEvent, nil)
-	aggregatorMock.Mock.On("On", baseEvent).Return(nil)
 
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Load(id, aggregatorMock)
 
+	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
 }
 
@@ -82,6 +85,7 @@ func Test_RepoLoadFail_StoreLoadErr(t *testing.T) {
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Load(id, aggregatorMock)
 
+	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
 }
 
@@ -93,11 +97,13 @@ func Test_RepoLoadFail_UnmarshalErr(t *testing.T) {
 	history, baseEvent, id := createMockDataForLoad()
 
 	storeMock.On("Load", id).Return(history, nil)
-	serializerMock.On("Unmarshal", []byte{}, "mockType").Return(baseEvent, expectedError)
+	serializerMock.On("Unmarshal", []byte{byte(3)}, "mockType").Return(baseEvent, expectedError)
 
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Load(id, aggregatorMock)
 
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
 }
 
@@ -109,31 +115,37 @@ func Test_RepoLoadFail_AggrOnUnkownErr(t *testing.T) {
 	history, baseEvent, id := createMockDataForLoad()
 
 	storeMock.On("Load", id).Return(history, nil)
-	serializerMock.On("Unmarshal", []byte{}, "mockType").Return(baseEvent, nil)
+	serializerMock.On("Unmarshal", []byte{byte(3)}, "mockType").Return(baseEvent, nil)
 	aggregatorMock.Mock.On("On", baseEvent).Return(expectedError)
 
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Load(id, aggregatorMock)
 
-	assert.NotNil(t, aggregatorMock)
+	aggregatorMock.Mock.AssertExpectations(t)
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
 }
 
-func Test_RepoLoadFail_AggrOnUnkownErr2(t *testing.T) {
+func Test_RepoLoadFail_AggrOnErrDeleted(t *testing.T) {
 	storeMock, serializerMock, aggregatorMock := setupMocks()
 
 	history, baseEvent, id := createMockDataForLoad()
 
 	storeMock.On("Load", id).Return(history, nil)
-	serializerMock.On("Unmarshal", []byte{}, "mockType").Return(baseEvent, nil)
+	serializerMock.On("Unmarshal", []byte{byte(3)}, "mockType").Return(baseEvent, nil)
 	aggregatorMock.Mock.On("On", baseEvent).Return(ErrDeleted)
 
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Load(id, aggregatorMock)
+
+	aggregatorMock.Mock.AssertExpectations(t)
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
 }
 
-func Test_RepoSaveSucess(t *testing.T) {
+func Test_RepoSaveSuccess(t *testing.T) {
 	storeMock, serializerMock, _ := setupMocks()
 
 	testEvent, testData := createMockDataForSave()
@@ -146,6 +158,8 @@ func Test_RepoSaveSucess(t *testing.T) {
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Save(testEvent)
 
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
 
 }
@@ -165,6 +179,7 @@ func Test_RepoSaveFail_MarshalErr(t *testing.T) {
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Save(testEvent)
 
+	serializerMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
 
 }
@@ -181,6 +196,8 @@ func Test_RepoSaveFail_SaveErr(t *testing.T) {
 	repo := NewRepository(storeMock, serializerMock)
 	err := repo.Save(testEvent)
 
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
 
 }

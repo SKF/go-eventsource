@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-
-	"github.com/SKF/go-eventsource/eventsource"
 )
 
 // JSONSerializer ...

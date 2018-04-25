@@ -18,7 +18,7 @@ func createMockHistory() Record {
 
 func createMockDataForLoad() (history []Record, baseEvent Event, id string) {
 	history = []Record{createMockHistory()}
-	baseEvent = BaseEvent{AggregateID: "", UserID: ""}
+	baseEvent = BaseEvent{AggregateID: "1-22-333-4444-55555", UserID: "TestMan"}
 	id = "1234-1234-1234"
 	return
 }

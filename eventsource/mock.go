@@ -8,7 +8,7 @@ type serializerMock struct {
 	*mock.Mock
 }
 
-//CreateSerializerMock create object
+// CreateSerializerMock returns a serializerMock
 func CreateSerializerMock() *serializerMock {
 	return &serializerMock{
 		Mock: &mock.Mock{},
@@ -19,7 +19,7 @@ type storeMock struct {
 	*mock.Mock
 }
 
-//CreateStoreMock create object
+// CreateStoreMock returns a storeMock
 func CreateStoreMock() *storeMock {
 	return &storeMock{
 		Mock: &mock.Mock{},
@@ -30,7 +30,7 @@ type aggregatorMock struct {
 	Mock *mock.Mock
 }
 
-//CreateAggregatorMock create object
+// CreateAggregatorMock returns a aggregatorMock
 func CreateAggregatorMock() *aggregatorMock {
 	return &aggregatorMock{
 		Mock: &mock.Mock{},
@@ -65,11 +65,11 @@ func (o aggregatorMock) SetAggregateID(id string) {
 
 }
 
-// Repository ...
 type repositoryMock struct {
 	*mock.Mock
 }
 
+// CreateRepositoryMock returns a repositoryMock
 func CreateRepositoryMock() *repositoryMock {
 	return &repositoryMock{
 		Mock: &mock.Mock{},

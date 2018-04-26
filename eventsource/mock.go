@@ -64,3 +64,24 @@ func (o aggregatorMock) On(event Event) error {
 func (o aggregatorMock) SetAggregateID(id string) {
 
 }
+
+// Repository ...
+type repositoryMock struct {
+	*mock.Mock
+}
+
+func CreateRepositoryMock() *repositoryMock {
+	return &repositoryMock{
+		Mock: &mock.Mock{},
+	}
+}
+
+func (r repositoryMock) Save(events ...Event) (err error) {
+	args := r.Called(events)
+	return args.Error(0)
+}
+
+func (r repositoryMock) Load(id string, aggr Aggregate) (err error) {
+	args := r.Called(id, aggr)
+	return args.Error(0)
+}

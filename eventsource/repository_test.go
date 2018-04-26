@@ -201,3 +201,29 @@ func Test_RepoSaveFail_SaveErr(t *testing.T) {
 	assert.EqualError(t, err, expectedError.Error())
 
 }
+
+func Test_RepoMock_OK(t *testing.T) {
+	repoMock := CreateRepositoryMock()
+	assert.NotNil(t, repoMock)
+
+	// Test save
+	repoMock.On("Save", mock.Anything).Return(nil).Once()
+
+	err := repoMock.Save(BaseEvent{})
+	assert.Nil(t, err)
+
+	expectedError := errors.New("Some error with store.Save")
+	repoMock.On("Save", mock.Anything).Return(expectedError)
+	err = repoMock.Save(BaseEvent{})
+	assert.EqualError(t, err, expectedError.Error())
+
+	// Load
+	repoMock.On("Load", mock.Anything, mock.Anything).Return(nil).Once()
+
+	err = repoMock.Load("123", nil)
+	assert.Nil(t, err)
+
+	repoMock.On("Load", mock.Anything, mock.Anything).Return(expectedError)
+	err = repoMock.Load("123", nil)
+	assert.EqualError(t, err, expectedError.Error())
+}

@@ -49,7 +49,6 @@ func (store *store) Load(id string) (records []eventsource.Record, err error) {
 		TableName:                 &store.tableName,
 		KeyConditionExpression:    aws.String("aggregateId = :id"),
 		ExpressionAttributeValues: key,
-		ScanIndexForward:          aws.Bool(true),
 	}
 
 	output, err := store.db.Query(&input)

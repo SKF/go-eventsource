@@ -18,6 +18,7 @@ type Aggregate interface {
 	SetAggregateID(id string)
 }
 
+// Serializer ...
 type Serializer interface {
 	Unmarshal(data []byte, eventType string) (event Event, err error)
 	Marshal(event Event) (data []byte, err error)
@@ -83,6 +84,7 @@ func (repo *repository) Save(events ...Event) (err error) {
 	return nil
 }
 
+// ErrDeleted represents Not found (was deleted)
 var ErrDeleted = errors.New("Not found (was deleted)")
 
 // Load ...

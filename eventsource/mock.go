@@ -4,84 +4,97 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type serializerMock struct {
+// SerializerMock is a mock
+type SerializerMock struct {
 	*mock.Mock
 }
 
 // CreateSerializerMock returns a serializerMock
-func CreateSerializerMock() *serializerMock {
-	return &serializerMock{
+func CreateSerializerMock() *SerializerMock {
+	return &SerializerMock{
 		Mock: &mock.Mock{},
 	}
 }
 
-type storeMock struct {
+// StoreMock is a mock
+type StoreMock struct {
 	*mock.Mock
 }
 
 // CreateStoreMock returns a storeMock
-func CreateStoreMock() *storeMock {
-	return &storeMock{
+func CreateStoreMock() *StoreMock {
+	return &StoreMock{
 		Mock: &mock.Mock{},
 	}
 }
 
-type aggregatorMock struct {
+// AggregatorMock is a mock
+type AggregatorMock struct {
 	Mock *mock.Mock
 }
 
 // CreateAggregatorMock returns a aggregatorMock
-func CreateAggregatorMock() *aggregatorMock {
-	return &aggregatorMock{
+func CreateAggregatorMock() *AggregatorMock {
+	return &AggregatorMock{
 		Mock: &mock.Mock{},
 	}
 }
 
-func (o serializerMock) Unmarshal(data []byte, eventType string) (event Event, err error) {
+// Unmarshal parses the JSON-encoded data and returns an event
+func (o SerializerMock) Unmarshal(data []byte, eventType string) (event Event, err error) {
 	args := o.Called(data, eventType)
 	return args.Get(0).(Event), args.Error(1)
 }
 
-func (o serializerMock) Marshal(event Event) (data []byte, err error) {
+// Marshal returns the JSON encoding of event.
+func (o SerializerMock) Marshal(event Event) (data []byte, err error) {
 	args := o.Called(event)
 	return args.Get(0).([]byte), args.Error(1)
 }
 
-func (o storeMock) Save(record Record) error {
+// Save is a mock
+func (o StoreMock) Save(record Record) error {
 	args := o.Called(record)
 	return args.Error(0)
 }
-func (o storeMock) Load(id string) (record []Record, err error) {
+
+// Load is a mock
+func (o StoreMock) Load(id string) (record []Record, err error) {
 	args := o.Called(id)
 	return args.Get(0).([]Record), args.Error(1)
 }
 
-func (o aggregatorMock) On(event Event) error {
+// On is a mock
+func (o AggregatorMock) On(event Event) error {
 	args := o.Mock.Called(event)
 	return args.Error(0)
 }
 
-func (o aggregatorMock) SetAggregateID(id string) {
+// SetAggregateID is not implemented
+func (o AggregatorMock) SetAggregateID(id string) {
 
 }
 
-type repositoryMock struct {
+// RepositoryMock is a mock
+type RepositoryMock struct {
 	*mock.Mock
 }
 
 // CreateRepositoryMock returns a repositoryMock
-func CreateRepositoryMock() *repositoryMock {
-	return &repositoryMock{
+func CreateRepositoryMock() *RepositoryMock {
+	return &RepositoryMock{
 		Mock: &mock.Mock{},
 	}
 }
 
-func (r repositoryMock) Save(events ...Event) (err error) {
+// Save is a mock
+func (r RepositoryMock) Save(events ...Event) (err error) {
 	args := r.Called(events)
 	return args.Error(0)
 }
 
-func (r repositoryMock) Load(id string, aggr Aggregate) (err error) {
+// Load is a mock
+func (r RepositoryMock) Load(id string, aggr Aggregate) (err error) {
 	args := r.Called(id, aggr)
 	return args.Error(0)
 }

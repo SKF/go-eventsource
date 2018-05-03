@@ -3,6 +3,7 @@ package eventsource
 import (
 	"bytes"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ func createMockDataForSave() (testEvent Event, testData []byte) {
 	return
 }
 
-func setupMocks() (storeMock *storeMock, serializerMock *serializerMock, aggregatorMock *aggregatorMock) {
+func setupMocks() (storeMock *StoreMock, serializerMock *SerializerMock, aggregatorMock *AggregatorMock) {
 	storeMock = CreateStoreMock()
 	serializerMock = CreateSerializerMock()
 	aggregatorMock = CreateAggregatorMock()
@@ -143,6 +144,25 @@ func Test_RepoLoadFail_AggrOnErrDeleted(t *testing.T) {
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
+}
+
+func Test_getTypeOfValue(t *testing.T) {
+	var tests = []struct {
+		input  interface{}
+		output string
+	}{
+		{&struct{}{}, "struct {}"},
+		{struct{}{}, "struct {}"},
+		{1.0, "float64"},
+		{"foobar", "string"},
+		{1, "int"},
+	}
+	for _, test := range tests {
+		actual := getTypeOfValue(test.input).String()
+		if strings.Compare(actual, test.output) != 0 {
+			t.Errorf("Expected %v to equal %s", actual, test.output)
+		}
+	}
 }
 
 func Test_RepoSaveSuccess(t *testing.T) {

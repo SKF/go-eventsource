@@ -221,12 +221,14 @@ func Test_RepoMock_OK(t *testing.T) {
 	assert.EqualError(t, err, expectedError.Error())
 
 	// Load
-	repoMock.On("Load", mock.Anything, mock.Anything).Return(nil).Once()
+	repoMock.On("Load", mock.Anything, mock.Anything).Return(false, nil).Once()
 
-	err = repoMock.Load("123", nil)
+	deleted, err := repoMock.Load("123", nil)
 	assert.Nil(t, err)
+	assert.False(t, deleted)
 
-	repoMock.On("Load", mock.Anything, mock.Anything).Return(expectedError)
-	err = repoMock.Load("123", nil)
+	repoMock.On("Load", mock.Anything, mock.Anything).Return(false, expectedError)
+	deleted, err = repoMock.Load("123", nil)
 	assert.EqualError(t, err, expectedError.Error())
+	assert.False(t, deleted)
 }

@@ -81,7 +81,7 @@ func (r repositoryMock) Save(events ...Event) (err error) {
 	return args.Error(0)
 }
 
-func (r repositoryMock) Load(id string, aggr Aggregate) (err error) {
+func (r repositoryMock) Load(id string, aggr Aggregate) (deleted bool, err error) {
 	args := r.Called(id, aggr)
-	return args.Error(0)
+	return args.Bool(0), args.Error(1)
 }

@@ -26,7 +26,7 @@ type Serializer interface {
 // Repository ...
 type Repository interface {
 	Save(events ...Event) (err error)
-	Load(id string, aggr Aggregate) (err error)
+	Load(id string, aggr Aggregate) (deleted bool, err error)
 }
 
 // NewRepository ...
@@ -83,17 +83,20 @@ func (repo *repository) Save(events ...Event) (err error) {
 	return nil
 }
 
-var ErrDeleted = errors.New("Not found (was deleted)")
+var (
+	ErrDeleted   = errors.New("Not found (was deleted)")
+	ErrNoHistory = errors.New("No history found")
+)
 
 // Load ...
-func (repo repository) Load(id string, aggr Aggregate) (err error) {
+func (repo repository) Load(id string, aggr Aggregate) (_ bool, err error) {
 	history, err := repo.store.Load(id)
 	if err != nil {
 		return
 	}
 
 	if len(history) == 0 {
-		return errors.New("No history found")
+		return false, ErrNoHistory
 	}
 
 	aggr.SetAggregateID(id)
@@ -105,8 +108,7 @@ func (repo repository) Load(id string, aggr Aggregate) (err error) {
 		}
 
 		if err = aggr.On(event); err == ErrDeleted {
-			aggr = nil
-			return nil
+			return true, nil
 		} else if err != nil {
 			return
 		}

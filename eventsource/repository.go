@@ -52,14 +52,6 @@ type repository struct {
 	serializer Serializer
 }
 
-func getTypeOfValue(input interface{}) reflect.Type {
-	value := reflect.TypeOf(input)
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
-	}
-	return value
-}
-
 // SaveEvent ...
 func (repo *repository) Save(events ...Event) (err error) {
 	for _, event := range events {
@@ -78,6 +70,13 @@ func (repo *repository) Save(events ...Event) (err error) {
 
 		if err = repo.store.Save(record); err != nil {
 			return
+		}
+
+		if eventOnSave, ok := event.(EventOnSave); ok {
+			err = eventOnSave.OnSave(record)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return nil

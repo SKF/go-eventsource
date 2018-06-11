@@ -6,6 +6,10 @@ type Event interface {
 	GetUserID() (userID string)
 }
 
+type EventOnSave interface {
+	OnSave(Record) error
+}
+
 // BaseEvent ...
 type BaseEvent struct {
 	AggregateID string `json:"aggregateId"`

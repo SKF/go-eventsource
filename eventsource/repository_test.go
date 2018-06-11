@@ -9,6 +9,23 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type OnSaveEvent struct {
+	*BaseEvent
+	OnSaveError error
+}
+
+func (s OnSaveEvent) GetAggregateID() string {
+	return s.BaseEvent.GetAggregateID()
+}
+
+func (s OnSaveEvent) GetUserID() string {
+	return s.BaseEvent.GetUserID()
+}
+
+func (s OnSaveEvent) OnSave(_ Record) error {
+	return s.OnSaveError
+}
+
 func createMockHistory() Record {
 	return Record{
 		Data: []byte{byte(3)},
@@ -164,7 +181,6 @@ func Test_RepoSaveSuccess(t *testing.T) {
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
-
 }
 
 func matchRecord(r Record, e Event, testData []byte) bool {
@@ -184,7 +200,47 @@ func Test_RepoSaveFail_MarshalErr(t *testing.T) {
 
 	serializerMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
+}
 
+func Test_RepoOnSave_SaveFail(t *testing.T) {
+	storeMock, serializerMock, _ := setupMocks()
+
+	expectedError := errors.New("OnSaveFailed")
+	testEvent := OnSaveEvent{
+		BaseEvent:   &BaseEvent{AggregateID: "123", UserID: "KalleKula"},
+		OnSaveError: expectedError,
+	}
+	testData := []byte{byte(5)}
+
+	serializerMock.On("Marshal", testEvent).Return(testData, nil)
+	storeMock.On("Save", mock.Anything).Return(nil)
+
+	repo := NewRepository(storeMock, serializerMock)
+	err := repo.Save(testEvent)
+
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
+	assert.EqualError(t, err, expectedError.Error())
+}
+
+func Test_RepoOnSave_SaveSuccess(t *testing.T) {
+	storeMock, serializerMock, _ := setupMocks()
+
+	testEvent := OnSaveEvent{
+		BaseEvent:   &BaseEvent{AggregateID: "123", UserID: "KalleKula"},
+		OnSaveError: nil,
+	}
+	testData := []byte{byte(5)}
+
+	serializerMock.On("Marshal", testEvent).Return(testData, nil)
+	storeMock.On("Save", mock.Anything).Return(nil)
+
+	repo := NewRepository(storeMock, serializerMock)
+	err := repo.Save(testEvent)
+
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
+	assert.Nil(t, err)
 }
 
 func Test_RepoSaveFail_SaveErr(t *testing.T) {
@@ -202,7 +258,6 @@ func Test_RepoSaveFail_SaveErr(t *testing.T) {
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
-
 }
 
 func Test_RepoMock_OK(t *testing.T) {

@@ -9,6 +9,23 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type OnSaveEvent struct {
+	*BaseEvent
+	OnSaveError error
+}
+
+func (s OnSaveEvent) GetAggregateID() string {
+	return s.BaseEvent.GetAggregateID()
+}
+
+func (s OnSaveEvent) GetUserID() string {
+	return s.BaseEvent.GetUserID()
+}
+
+func (s OnSaveEvent) OnSave(_ Record) error {
+	return s.OnSaveError
+}
+
 func createMockHistory() Record {
 	return Record{
 		Data: []byte{byte(3)},
@@ -46,19 +63,17 @@ func Test_RepoLoadSuccess(t *testing.T) {
 	aggregatorMock.Mock.On("On", baseEvent).Return(nil)
 
 	repo := NewRepository(storeMock, serializerMock)
-	err := repo.Load(id, aggregatorMock)
+	deleted, err := repo.Load(id, aggregatorMock)
 
 	aggregatorMock.Mock.AssertExpectations(t)
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
-
+	assert.False(t, deleted)
 }
 
 func Test_RepoLoadFail_NoHistory(t *testing.T) {
 	storeMock, serializerMock, aggregatorMock := setupMocks()
-
-	expectedError := errors.New("No history found")
 
 	history := []Record{}
 	_, _, id := createMockDataForLoad()
@@ -66,10 +81,11 @@ func Test_RepoLoadFail_NoHistory(t *testing.T) {
 	storeMock.On("Load", id).Return(history, nil)
 
 	repo := NewRepository(storeMock, serializerMock)
-	err := repo.Load(id, aggregatorMock)
+	deleted, err := repo.Load(id, aggregatorMock)
 
 	storeMock.AssertExpectations(t)
-	assert.EqualError(t, err, expectedError.Error())
+	assert.EqualError(t, err, ErrNoHistory.Error())
+	assert.False(t, deleted)
 }
 
 func Test_RepoLoadFail_StoreLoadErr(t *testing.T) {
@@ -83,10 +99,11 @@ func Test_RepoLoadFail_StoreLoadErr(t *testing.T) {
 	storeMock.On("Load", id).Return(history, expectedError)
 
 	repo := NewRepository(storeMock, serializerMock)
-	err := repo.Load(id, aggregatorMock)
+	deleted, err := repo.Load(id, aggregatorMock)
 
 	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
+	assert.False(t, deleted)
 }
 
 func Test_RepoLoadFail_UnmarshalErr(t *testing.T) {
@@ -100,11 +117,12 @@ func Test_RepoLoadFail_UnmarshalErr(t *testing.T) {
 	serializerMock.On("Unmarshal", []byte{byte(3)}, "mockType").Return(baseEvent, expectedError)
 
 	repo := NewRepository(storeMock, serializerMock)
-	err := repo.Load(id, aggregatorMock)
+	deleted, err := repo.Load(id, aggregatorMock)
 
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
+	assert.False(t, deleted)
 }
 
 func Test_RepoLoadFail_AggrOnUnkownErr(t *testing.T) {
@@ -119,12 +137,13 @@ func Test_RepoLoadFail_AggrOnUnkownErr(t *testing.T) {
 	aggregatorMock.Mock.On("On", baseEvent).Return(expectedError)
 
 	repo := NewRepository(storeMock, serializerMock)
-	err := repo.Load(id, aggregatorMock)
+	deleted, err := repo.Load(id, aggregatorMock)
 
 	aggregatorMock.Mock.AssertExpectations(t)
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
+	assert.False(t, deleted)
 }
 
 func Test_RepoLoadFail_AggrOnErrDeleted(t *testing.T) {
@@ -137,12 +156,13 @@ func Test_RepoLoadFail_AggrOnErrDeleted(t *testing.T) {
 	aggregatorMock.Mock.On("On", baseEvent).Return(ErrDeleted)
 
 	repo := NewRepository(storeMock, serializerMock)
-	err := repo.Load(id, aggregatorMock)
+	deleted, err := repo.Load(id, aggregatorMock)
 
 	aggregatorMock.Mock.AssertExpectations(t)
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
+	assert.True(t, deleted)
 }
 
 func Test_RepoSaveSuccess(t *testing.T) {
@@ -161,7 +181,6 @@ func Test_RepoSaveSuccess(t *testing.T) {
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
-
 }
 
 func matchRecord(r Record, e Event, testData []byte) bool {
@@ -181,7 +200,47 @@ func Test_RepoSaveFail_MarshalErr(t *testing.T) {
 
 	serializerMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
+}
 
+func Test_RepoOnSave_SaveFail(t *testing.T) {
+	storeMock, serializerMock, _ := setupMocks()
+
+	expectedError := errors.New("OnSaveFailed")
+	testEvent := OnSaveEvent{
+		BaseEvent:   &BaseEvent{AggregateID: "123", UserID: "KalleKula"},
+		OnSaveError: expectedError,
+	}
+	testData := []byte{byte(5)}
+
+	serializerMock.On("Marshal", testEvent).Return(testData, nil)
+	storeMock.On("Save", mock.Anything).Return(nil)
+
+	repo := NewRepository(storeMock, serializerMock)
+	err := repo.Save(testEvent)
+
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
+	assert.EqualError(t, err, expectedError.Error())
+}
+
+func Test_RepoOnSave_SaveSuccess(t *testing.T) {
+	storeMock, serializerMock, _ := setupMocks()
+
+	testEvent := OnSaveEvent{
+		BaseEvent:   &BaseEvent{AggregateID: "123", UserID: "KalleKula"},
+		OnSaveError: nil,
+	}
+	testData := []byte{byte(5)}
+
+	serializerMock.On("Marshal", testEvent).Return(testData, nil)
+	storeMock.On("Save", mock.Anything).Return(nil)
+
+	repo := NewRepository(storeMock, serializerMock)
+	err := repo.Save(testEvent)
+
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
+	assert.Nil(t, err)
 }
 
 func Test_RepoSaveFail_SaveErr(t *testing.T) {
@@ -199,7 +258,6 @@ func Test_RepoSaveFail_SaveErr(t *testing.T) {
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.EqualError(t, err, expectedError.Error())
-
 }
 
 func Test_RepoMock_OK(t *testing.T) {
@@ -218,12 +276,14 @@ func Test_RepoMock_OK(t *testing.T) {
 	assert.EqualError(t, err, expectedError.Error())
 
 	// Load
-	repoMock.On("Load", mock.Anything, mock.Anything).Return(nil).Once()
+	repoMock.On("Load", mock.Anything, mock.Anything).Return(false, nil).Once()
 
-	err = repoMock.Load("123", nil)
+	deleted, err := repoMock.Load("123", nil)
 	assert.Nil(t, err)
+	assert.False(t, deleted)
 
-	repoMock.On("Load", mock.Anything, mock.Anything).Return(expectedError)
-	err = repoMock.Load("123", nil)
+	repoMock.On("Load", mock.Anything, mock.Anything).Return(false, expectedError)
+	deleted, err = repoMock.Load("123", nil)
 	assert.EqualError(t, err, expectedError.Error())
+	assert.False(t, deleted)
 }

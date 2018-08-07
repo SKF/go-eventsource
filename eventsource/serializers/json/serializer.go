@@ -8,11 +8,12 @@ import (
 	"github.com/SKF/go-eventsource/eventsource"
 )
 
-// JSONSerializer ...
+// JSONSerializer takes events and marshals
 type serializer struct {
 	eventTypes map[string]reflect.Type
 }
 
+// NewSerializer returns a seriablizable eventsource
 func NewSerializer(events ...eventsource.Event) eventsource.Serializer {
 	eventTypes := map[string]reflect.Type{}
 	for _, event := range events {
@@ -30,7 +31,7 @@ func getTypeOfValue(input interface{}) reflect.Type {
 	return value
 }
 
-// UnmarshalEvent ...
+// Unmarshal implements the Marshaler encoding interface
 func (s *serializer) Unmarshal(data []byte, eventType string) (out eventsource.Event, err error) {
 	recordType, ok := s.eventTypes[eventType]
 	if !ok {
@@ -52,6 +53,7 @@ func (s *serializer) Unmarshal(data []byte, eventType string) (out eventsource.E
 	return
 }
 
+// Marshal implements the Unmarshaler encoding interface
 func (s *serializer) Marshal(event eventsource.Event) (data []byte, err error) {
 	return json.Marshal(event)
 }

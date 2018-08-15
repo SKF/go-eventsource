@@ -98,3 +98,5 @@ func (r RepositoryMock) Load(id string, aggr Aggregate) (deleted bool, err error
 	args := r.Called(id, aggr)
 	return args.Bool(0), args.Error(1)
 }
+
+var _ Store = &StoreMock{}

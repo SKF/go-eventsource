@@ -100,3 +100,4 @@ func (r RepositoryMock) Load(id string, aggr Aggregate) (deleted bool, err error
 }
 
 var _ Store = &StoreMock{}
+var _ Repository = &RepositoryMock{}

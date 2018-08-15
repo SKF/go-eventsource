@@ -46,7 +46,7 @@ func createMockDataForSave() (testEvent Event, testData []byte) {
 	return
 }
 
-func setupMocks() (storeMock *storeMock, serializerMock *serializerMock, aggregatorMock *aggregatorMock) {
+func setupMocks() (storeMock *StoreMock, serializerMock *SerializerMock, aggregatorMock *AggregatorMock) {
 	storeMock = CreateStoreMock()
 	serializerMock = CreateSerializerMock()
 	aggregatorMock = CreateAggregatorMock()

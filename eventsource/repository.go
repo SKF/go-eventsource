@@ -6,30 +6,31 @@ import (
 	"time"
 )
 
-// Store ...
+// Store is a interface
 type Store interface {
 	Save(record Record) error
 	Load(id string) (record []Record, err error)
 }
 
-// Aggregate ...
+// Aggregate is a interface
 type Aggregate interface {
 	On(event Event) error
 	SetAggregateID(id string)
 }
 
+// Serializer is a interface
 type Serializer interface {
 	Unmarshal(data []byte, eventType string) (event Event, err error)
 	Marshal(event Event) (data []byte, err error)
 }
 
-// Repository ...
+// Repository is a interface
 type Repository interface {
 	Save(events ...Event) (err error)
 	Load(id string, aggr Aggregate) (deleted bool, err error)
 }
 
-// NewRepository ...
+// NewRepository returns a new repository
 func NewRepository(store Store, serializer Serializer) Repository {
 	return &repository{
 		store:      store,
@@ -37,7 +38,7 @@ func NewRepository(store Store, serializer Serializer) Repository {
 	}
 }
 
-// Record ...
+// Record is a store row
 type Record struct {
 	AggregateID string `json:"aggregateId"`
 	Timestamp   int64  `json:"timestamp"`
@@ -46,13 +47,12 @@ type Record struct {
 	UserID      string `json:"userId"`
 }
 
-// repository ...
 type repository struct {
 	store      Store
 	serializer Serializer
 }
 
-// SaveEvent ...
+// Save persists the event to the repo
 func (repo *repository) Save(events ...Event) (err error) {
 	for _, event := range events {
 		var data []byte
@@ -87,7 +87,7 @@ var (
 	ErrNoHistory = errors.New("No history found")
 )
 
-// Load ...
+// Load rehydrates the repo
 func (repo repository) Load(id string, aggr Aggregate) (_ bool, err error) {
 	history, err := repo.store.Load(id)
 	if err != nil {

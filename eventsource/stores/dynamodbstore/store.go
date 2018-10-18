@@ -11,8 +11,9 @@ import (
 )
 
 type store struct {
-	db        *dynamodb.DynamoDB
-	tableName string
+	db             *dynamodb.DynamoDB
+	tableName      string
+	consistentRead bool
 }
 
 // New ...
@@ -21,7 +22,8 @@ func New(tableName string) eventsource.Store {
 		db: dynamodb.New(
 			session.Must(session.NewSession()),
 		),
-		tableName: tableName,
+		tableName:      tableName,
+		consistentRead: true,
 	}
 }
 
@@ -49,6 +51,7 @@ func (store *store) Load(id string) (records []eventsource.Record, err error) {
 		TableName:                 &store.tableName,
 		KeyConditionExpression:    aws.String("aggregateId = :id"),
 		ExpressionAttributeValues: key,
+		ConsistentRead:            &store.consistentRead,
 	}
 
 	output, err := store.db.Query(&input)

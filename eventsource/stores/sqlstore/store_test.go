@@ -12,7 +12,8 @@ import (
 )
 
 func TestSaveLoad(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
+		t.Log("Skipping postgres e2e test")
 		t.Skip()
 	}
 
@@ -41,7 +42,12 @@ func TestSaveLoad(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected err to be nil: %s", err)
 	}
-	if len(records) == 0 {
-		t.Errorf("Expected results from store, got none")
+	if len(records) != 1 {
+		t.Errorf("Expected one result from store, got %d", len(records))
 	}
+
+	if _, err := db.Exec("DELETE FROM events WHERE aggregate_id = $1", aggID); err != nil {
+		t.Logf("Clean up failed: %s", err)
+	}
+
 }

@@ -26,6 +26,7 @@ Included serializer:
 Included stores:
 - `dynamodb`
 - `memory`
+- `sql`
 
 If you want to add your own store or serializer, the package has these defined interfaces.
 

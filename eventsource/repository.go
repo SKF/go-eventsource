@@ -41,6 +41,7 @@ func NewRepository(store Store, serializer Serializer) Repository {
 // Record is a store row
 type Record struct {
 	AggregateID string `json:"aggregateId"`
+	SequenceID  string `json:"sequenceId"`
 	Timestamp   int64  `json:"timestamp"`
 	Type        string `json:"type"`
 	Data        []byte `json:"data"`

@@ -31,7 +31,7 @@ func TestSaveLoad(t *testing.T) {
 		AggregateID: aggID,
 		UserID:      userID,
 		Type:        "TestEvent",
-		Timestamp:   time.Now().Unix(),
+		Timestamp:   time.Now(),
 		Data:        []byte("hejhopp"),
 	}
 	if err := store.Save(event); err != nil {

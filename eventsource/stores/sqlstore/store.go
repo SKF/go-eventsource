@@ -22,7 +22,7 @@ type store struct {
 }
 
 const (
-	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, to_timestamp($3), $4, $5, $6)"
+	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 1000000"
 )
 
@@ -59,12 +59,9 @@ func (store *store) Load(id string) (records []eventsource.Record, err error) {
 	rows, err := stmt.Query(id)
 	for rows.Next() {
 		var record eventsource.Record
-		// aggregate_id, sequence_id, created_at, user_id, type, data
-		var tempTimestamp time.Time
-		if err = rows.Scan(&record.AggregateID, &record.SequenceID, &tempTimestamp, &record.UserID, &record.Type, &record.Data); err != nil {
+		if err = rows.Scan(&record.AggregateID, &record.SequenceID, &record.Timestamp, &record.UserID, &record.Type, &record.Data); err != nil {
 			return
 		}
-		record.Timestamp = tempTimestamp.UTC().Unix()
 		records = append(records, record)
 	}
 	if err = rows.Err(); err != nil {

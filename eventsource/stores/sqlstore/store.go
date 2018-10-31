@@ -10,8 +10,10 @@ import (
 	"github.com/oklog/ulid"
 )
 
-var entropy = rand.New(rand.NewSource(time.Now().UnixNano()))
+// See https://godoc.org/github.com/oklog/ulid#example-ULID
+var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 
+// NewULID returns a Universally Unique Lexicographically Sortable Identifier
 func NewULID() string {
 	return ulid.MustNew(ulid.Now(), entropy).String()
 }

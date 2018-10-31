@@ -10,6 +10,7 @@ import (
 	"github.com/SKF/go-utility/uuid"
 )
 
+// CreateTestEvents - create some random test events in sequence
 func CreateTestEvents(db *sql.DB, numberOfEvents int) (result []eventsource.Record, err error) {
 	result = []eventsource.Record{}
 
@@ -47,6 +48,8 @@ func CreateTestEvents(db *sql.DB, numberOfEvents int) (result []eventsource.Reco
 	}
 	return
 }
+
+// DeleteEvents - delete events (using the SequenceID)
 func DeleteEvents(db *sql.DB, events []eventsource.Record) error {
 	for _, e := range events {
 		_, err := db.Exec("DELETE from events WHERE sequence_id = $1", e.SequenceID)

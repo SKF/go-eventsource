@@ -42,7 +42,7 @@ func (store *store) Save(record eventsource.Record) (err error) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(record.AggregateID, NewULID(), record.Timestamp, record.UserID, record.Type, record.Data)
+	_, err = stmt.Exec(record.AggregateID, NewULID(), record.Timestamp.UTC(), record.UserID, record.Type, record.Data)
 	if err != nil {
 		return
 	}

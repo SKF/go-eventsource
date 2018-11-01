@@ -2,11 +2,16 @@ package sqlstore_test
 
 import (
 	"database/sql"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/SKF/go-eventsource/eventsource/stores/sqlstore"
 	_ "github.com/lib/pq"
+	"github.com/oklog/ulid"
 )
 
 func TestSaveLoad(t *testing.T) {
@@ -29,4 +34,19 @@ func TestSaveLoad(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unable to delete events: %v got err:%v", events, err)
 	}
+}
+
+func TestULID(t *testing.T) {
+	var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	ulidNow := ulid.Now()
+	var ulids []string
+	ulidMap := make(map[string]int, 10000)
+	for i := 0; i < 10000; i++ {
+		ulids = append(ulids, ulid.MustNew(ulidNow, entropy).String())
+		ulidMap[ulids[i]] = i
+		if i > 0 {
+			assert.True(t, ulids[i] > ulids[i-1])
+		}
+	}
+	assert.Equal(t, len(ulidMap), 10000)
 }

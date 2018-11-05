@@ -26,7 +26,7 @@ func TestSaveLoad(t *testing.T) {
 	}
 	defer db.Close()
 
-	events, err := sqlstore.CreateTestEvents(db, 10)
+	events, err := sqlstore.CreateTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
 	if err != nil {
 		t.Errorf("unable to create events err: %v", err)
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 // CreateTestEvents - create some random test events in sequence
-func CreateTestEvents(db *sql.DB, numberOfEvents int) (result []eventsource.Record, err error) {
+func CreateTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
 	result = []eventsource.Record{}
 
 	store := New(db, "events")
@@ -19,12 +19,21 @@ func CreateTestEvents(db *sql.DB, numberOfEvents int) (result []eventsource.Reco
 	for i := 0; i < numberOfEvents; i++ {
 		aggID := uuid.New()
 		userID := uuid.New()
+		eventType := fmt.Sprintf("TestEvent %d", i+1)
+		if i < len(eventTypeList) {
+			eventType = eventTypeList[i]
+		}
+		eventData := []byte(fmt.Sprintf("TestEventData %d", i+1))
+		if i < len(eventDataList) {
+			eventData = eventDataList[i]
+		}
+
 		event := eventsource.Record{
 			AggregateID: aggID.String(),
 			UserID:      userID.String(),
-			Type:        fmt.Sprintf("TestEvent %d", i+1),
+			Type:        eventType,
 			Timestamp:   time.Now().UTC(),
-			Data:        []byte("hejhopp"),
+			Data:        eventData,
 		}
 
 		if err = store.Save(event); err != nil {

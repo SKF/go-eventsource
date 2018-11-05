@@ -1,6 +1,8 @@
 package dynamodbstore
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -17,11 +19,9 @@ type store struct {
 }
 
 // New ...
-func New(tableName string) eventsource.Store {
+func New(sess *session.Session, tableName string) eventsource.Store {
 	return &store{
-		db: dynamodb.New(
-			session.Must(session.NewSession()),
-		),
+		db:             dynamodb.New(sess),
 		tableName:      tableName,
 		consistentRead: true,
 	}
@@ -29,11 +29,16 @@ func New(tableName string) eventsource.Store {
 
 // Save ...
 func (store *store) Save(record eventsource.Record) (err error) {
+	return store.SaveWithContext(context.Background(), record)
+}
+
+// SaveWithContext ...
+func (store *store) SaveWithContext(ctx context.Context, record eventsource.Record) (err error) {
 	result, err := dynamodbattribute.MarshalMap(record)
 	if err != nil {
 		return
 	}
-	_, err = store.db.PutItem(&dynamodb.PutItemInput{
+	_, err = store.db.PutItemWithContext(ctx, &dynamodb.PutItemInput{
 		TableName: &store.tableName,
 		Item:      result,
 	})
@@ -42,6 +47,11 @@ func (store *store) Save(record eventsource.Record) (err error) {
 
 //Load ...
 func (store *store) Load(id string) (records []eventsource.Record, err error) {
+	return store.LoadWithContext(context.Background(), id)
+}
+
+//LoadWithContext ...
+func (store *store) LoadWithContext(ctx context.Context, id string) (records []eventsource.Record, err error) {
 	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{
 		":id": &dynamodb.AttributeValue{S: &id},
@@ -54,7 +64,7 @@ func (store *store) Load(id string) (records []eventsource.Record, err error) {
 		ConsistentRead:            &store.consistentRead,
 	}
 
-	output, err := store.db.Query(&input)
+	output, err := store.db.QueryWithContext(ctx, &input)
 	if err != nil {
 		log.
 			WithField("input", input).

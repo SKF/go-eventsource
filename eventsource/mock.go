@@ -1,6 +1,8 @@
 package eventsource
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/mock"
 )
 
@@ -58,15 +60,27 @@ func (o StoreMock) Save(record Record) error {
 	return args.Error(0)
 }
 
+// SaveWithContext is a mock
+func (o StoreMock) SaveWithContext(ctx context.Context, record Record) error {
+	args := o.Called(ctx, record)
+	return args.Error(0)
+}
+
 // Load is a mock
 func (o StoreMock) Load(id string) (record []Record, err error) {
 	args := o.Called(id)
 	return args.Get(0).([]Record), args.Error(1)
 }
 
+// LoadWithContext is a mock
+func (o StoreMock) LoadWithContext(ctx context.Context, id string) (record []Record, err error) {
+	args := o.Called(ctx, id)
+	return args.Get(0).([]Record), args.Error(1)
+}
+
 // On is a mock
-func (o AggregatorMock) On(event Event) error {
-	args := o.Mock.Called(event)
+func (o AggregatorMock) On(ctx context.Context, event Event) error {
+	args := o.Mock.Called(ctx, event)
 	return args.Error(0)
 }
 
@@ -93,9 +107,21 @@ func (r RepositoryMock) Save(events ...Event) (err error) {
 	return args.Error(0)
 }
 
+// SaveWithContext is a mock
+func (r RepositoryMock) SaveWithContext(ctx context.Context, events ...Event) (err error) {
+	args := r.Called(ctx, events)
+	return args.Error(0)
+}
+
 // Load is a mock
 func (r RepositoryMock) Load(id string, aggr Aggregate) (deleted bool, err error) {
 	args := r.Called(id, aggr)
+	return args.Bool(0), args.Error(1)
+}
+
+// LoadWithContext is a mock
+func (r RepositoryMock) LoadWithContext(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error) {
+	args := r.Called(ctx, id, aggr)
 	return args.Bool(0), args.Error(1)
 }
 

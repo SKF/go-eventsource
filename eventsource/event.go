@@ -1,5 +1,7 @@
 package eventsource
 
+import "context"
+
 // Event ...
 type Event interface {
 	GetAggregateID() string
@@ -8,6 +10,10 @@ type Event interface {
 
 type EventOnSave interface {
 	OnSave(Record) error
+}
+
+type EventOnSaveWithContext interface {
+	OnSave(context.Context, Record) error
 }
 
 // BaseEvent ...

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"math/rand"
@@ -38,13 +39,18 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 
 // Save ...
 func (store *store) Save(record eventsource.Record) (err error) {
-	stmt, err := store.db.Prepare(fmt.Sprintf(saveSQL, store.tablename))
+	return store.SaveWithContext(context.Background(), record)
+}
+
+// SaveWithContext ...
+func (store *store) SaveWithContext(ctx context.Context, record eventsource.Record) (err error) {
+	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(saveSQL, store.tablename))
 	if err != nil {
 		return
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(record.AggregateID, NewULID(), record.Timestamp.UTC(), record.UserID, record.Type, record.Data)
+	_, err = stmt.ExecContext(ctx, record.AggregateID, NewULID(), record.Timestamp.UTC(), record.UserID, record.Type, record.Data)
 	if err != nil {
 		return
 	}
@@ -53,12 +59,17 @@ func (store *store) Save(record eventsource.Record) (err error) {
 
 // Load ...
 func (store *store) Load(id string) (records []eventsource.Record, err error) {
-	stmt, err := store.db.Prepare(fmt.Sprintf(loadSQL, store.tablename))
+	return store.LoadWithContext(context.Background(), id)
+}
+
+// LoadWithContext ...
+func (store *store) LoadWithContext(ctx context.Context, id string) (records []eventsource.Record, err error) {
+	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(loadSQL, store.tablename))
 	if err != nil {
 		return
 	}
 	defer stmt.Close()
-	rows, err := stmt.Query(id)
+	rows, err := stmt.QueryContext(ctx, id)
 	for rows.Next() {
 		var record eventsource.Record
 		if err = rows.Scan(&record.AggregateID, &record.SequenceID, &record.Timestamp, &record.UserID, &record.Type, &record.Data); err != nil {

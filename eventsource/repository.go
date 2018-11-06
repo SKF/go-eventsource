@@ -45,12 +45,12 @@ func NewRepository(store Store, serializer Serializer) Repository {
 
 // Record is a store row
 type Record struct {
-	AggregateID string    `json:"aggregateId"`
-	SequenceID  string    `json:"sequenceId"`
-	Timestamp   time.Time `json:"timestamp" dynamodbav:",unixtime"`
-	Type        string    `json:"type"`
-	Data        []byte    `json:"data"`
-	UserID      string    `json:"userId"`
+	AggregateID string `json:"aggregateId"`
+	SequenceID  string `json:"sequenceId"`
+	Timestamp   int64  `json:"timestamp"`
+	Type        string `json:"type"`
+	Data        []byte `json:"data"`
+	UserID      string `json:"userId"`
 }
 
 type repository struct {
@@ -73,7 +73,7 @@ func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (e
 
 		record := Record{
 			AggregateID: event.GetAggregateID(),
-			Timestamp:   time.Now(),
+			Timestamp:   time.Now().UnixNano(),
 			Type:        reflect.TypeOf(event).Name(),
 			Data:        data,
 			UserID:      event.GetUserID(),

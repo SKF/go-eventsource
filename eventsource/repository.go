@@ -64,7 +64,7 @@ type repository struct {
 // See https://godoc.org/github.com/oklog/ulid#example-ULID
 var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 
-// NewULID returns a Universally Unique Lexicographically Sortable Identifier
+// newULID returns a Universally Unique Lexicographically Sortable Identifier
 func newULID() string {
 	return ulid.MustNew(ulid.Now(), entropy).String()
 }

@@ -4,20 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/SKF/go-eventsource/eventsource"
-	"github.com/oklog/ulid"
 )
-
-// See https://godoc.org/github.com/oklog/ulid#example-ULID
-var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
-
-// NewULID returns a Universally Unique Lexicographically Sortable Identifier
-func NewULID() string {
-	return ulid.MustNew(ulid.Now(), entropy).String()
-}
 
 type store struct {
 	db        *sql.DB
@@ -50,7 +39,7 @@ func (store *store) SaveWithContext(ctx context.Context, record eventsource.Reco
 	}
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, record.AggregateID, NewULID(), record.Timestamp, record.UserID, record.Type, record.Data)
+	_, err = stmt.ExecContext(ctx, record.AggregateID, record.SequenceID, record.Timestamp, record.UserID, record.Type, record.Data)
 	if err != nil {
 		return
 	}

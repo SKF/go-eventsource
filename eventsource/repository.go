@@ -3,8 +3,11 @@ package eventsource
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"reflect"
 	"time"
+
+	"github.com/oklog/ulid"
 )
 
 // Store is a interface
@@ -58,6 +61,14 @@ type repository struct {
 	serializer Serializer
 }
 
+// See https://godoc.org/github.com/oklog/ulid#example-ULID
+var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+
+// NewULID returns a Universally Unique Lexicographically Sortable Identifier
+func NewULID() string {
+	return ulid.MustNew(ulid.Now(), entropy).String()
+}
+
 // Save persists the event to the repo
 func (repo *repository) Save(events ...Event) (err error) {
 	return repo.SaveWithContext(context.Background(), events...)
@@ -73,6 +84,7 @@ func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (e
 
 		record := Record{
 			AggregateID: event.GetAggregateID(),
+			SequenceID:  NewULID(),
 			Timestamp:   time.Now().UnixNano(),
 			Type:        reflect.TypeOf(event).Name(),
 			Data:        data,

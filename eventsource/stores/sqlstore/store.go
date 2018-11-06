@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SKF/go-eventsource/eventsource"
+	"github.com/oklog/ulid"
 )
 
 var (

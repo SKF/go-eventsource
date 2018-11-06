@@ -64,8 +64,8 @@ type repository struct {
 // See https://godoc.org/github.com/oklog/ulid#example-ULID
 var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 
-// newULID returns a Universally Unique Lexicographically Sortable Identifier
-func newULID() string {
+// NewULID returns a Universally Unique Lexicographically Sortable Identifier
+func NewULID() string {
 	return ulid.MustNew(ulid.Now(), entropy).String()
 }
 
@@ -85,7 +85,7 @@ func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (e
 		record := Record{
 			AggregateID: event.GetAggregateID(),
 			Timestamp:   time.Now(),
-			SequenceID:  newULID(),
+			SequenceID:  NewULID(),
 			Type:        reflect.TypeOf(event).Name(),
 			Data:        data,
 			UserID:      event.GetUserID(),

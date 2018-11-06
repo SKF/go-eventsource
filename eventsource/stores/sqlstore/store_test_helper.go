@@ -31,6 +31,7 @@ func CreateTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 		event := eventsource.Record{
 			AggregateID: aggID.String(),
 			UserID:      userID.String(),
+			SequenceID:  eventsource.NewULID(),
 			Type:        eventType,
 			Timestamp:   time.Now().UTC(),
 			Data:        eventData,

@@ -39,7 +39,7 @@ func (store *store) SaveWithContext(ctx context.Context, record eventsource.Reco
 	}
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, record.AggregateID, record.SequenceID, record.Timestamp.UTC(), record.UserID, record.Type, record.Data)
+	_, err = stmt.ExecContext(ctx, record.AggregateID, record.SequenceID, record.Timestamp, record.UserID, record.Type, record.Data)
 	if err != nil {
 		return
 	}
@@ -61,6 +61,7 @@ func (store *store) LoadWithContext(ctx context.Context, id string) (records []e
 	rows, err := stmt.QueryContext(ctx, id)
 	for rows.Next() {
 		var record eventsource.Record
+		// aggregate_id, sequence_id, created_at, user_id, type, data
 		if err = rows.Scan(&record.AggregateID, &record.SequenceID, &record.Timestamp, &record.UserID, &record.Type, &record.Data); err != nil {
 			return
 		}

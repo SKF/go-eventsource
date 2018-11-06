@@ -33,7 +33,7 @@ func CreateTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 			UserID:      userID.String(),
 			SequenceID:  eventsource.NewULID(),
 			Type:        eventType,
-			Timestamp:   time.Now().UTC(),
+			Timestamp:   time.Now().UnixNano(),
 			Data:        eventData,
 		}
 

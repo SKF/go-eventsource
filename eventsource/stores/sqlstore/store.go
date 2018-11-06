@@ -4,15 +4,21 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/oklog/ulid"
 )
 
-var entropy = rand.New(rand.NewSource(time.Now().UnixNano()))
+var (
+	entropy      = rand.New(rand.NewSource(time.Now().UnixNano()))
+	entropyMutex sync.Mutex
+)
 
 func NewULID() string {
+	entropyMutex.Lock()
+	defer entropyMutex.Unlock()
 	return ulid.MustNew(ulid.Now(), entropy).String()
 }
 

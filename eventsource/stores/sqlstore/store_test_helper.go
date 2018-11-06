@@ -32,7 +32,7 @@ func CreateTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 			AggregateID: aggID.String(),
 			UserID:      userID.String(),
 			Type:        eventType,
-			Timestamp:   time.Now().UTC(),
+			Timestamp:   time.Now().UnixNano(),
 			Data:        eventData,
 		}
 

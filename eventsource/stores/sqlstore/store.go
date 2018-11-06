@@ -25,8 +25,8 @@ type store struct {
 }
 
 const (
-	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, to_timestamp($3 / 10^9), $4, $5, $6)"
-	loadSQL = "SELECT aggregate_id, sequence_id, extract(epoch from timestamp created_at) * 10^9, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 1000000"
+	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
+	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 1000000"
 )
 
 // New ...

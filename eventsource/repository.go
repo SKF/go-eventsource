@@ -64,7 +64,7 @@ type repository struct {
 
 // See https://godoc.org/github.com/oklog/ulid#example-ULID
 var (
-	entropy      = rand.New(rand.NewSource(time.Now().UnixNano()))
+	entropy      = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 	entropyMutex sync.Mutex
 )
 

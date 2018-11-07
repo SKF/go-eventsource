@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/oklog/ulid"
@@ -62,10 +63,15 @@ type repository struct {
 }
 
 // See https://godoc.org/github.com/oklog/ulid#example-ULID
-var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+var (
+	entropy      = rand.New(rand.NewSource(time.Now().UnixNano()))
+	entropyMutex sync.Mutex
+)
 
 // NewULID returns a Universally Unique Lexicographically Sortable Identifier
 func NewULID() string {
+	entropyMutex.Lock()
+	defer entropyMutex.Unlock()
 	return ulid.MustNew(ulid.Now(), entropy).String()
 }
 

@@ -9,4 +9,4 @@ install:
 before_script:
   - go vet ./...
 script:
-  - go test ./... --short
+  - go test ./... -race -short

@@ -1,6 +1,7 @@
 package memorystore
 
 import (
+	"context"
 	"errors"
 
 	"github.com/SKF/go-eventsource/eventsource"
@@ -17,7 +18,12 @@ func New() eventsource.Store {
 }
 
 // Save ...
-func (mem *store) Save(record eventsource.Record) error {
+func (store *store) Save(record eventsource.Record) (err error) {
+	return store.SaveWithContext(context.Background(), record)
+}
+
+// SaveWithContext ...
+func (mem *store) SaveWithContext(_ context.Context, record eventsource.Record) error {
 	id := record.AggregateID
 	if rows, ok := mem.Data[id]; ok {
 		mem.Data[id] = append(rows, record)
@@ -28,8 +34,13 @@ func (mem *store) Save(record eventsource.Record) error {
 	return nil
 }
 
-// Load ...
-func (mem *store) Load(id string) (evt []eventsource.Record, err error) {
+//Load ...
+func (store *store) Load(id string) (records []eventsource.Record, err error) {
+	return store.LoadWithContext(context.Background(), id)
+}
+
+// LoadWithContext ...
+func (mem *store) LoadWithContext(_ context.Context, id string) (evt []eventsource.Record, err error) {
 	if rows, ok := mem.Data[id]; ok {
 		return rows, nil
 	}

@@ -2,13 +2,16 @@ package sqlstore_test
 
 import (
 	"database/sql"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/SKF/go-eventsource/eventsource"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/SKF/go-eventsource/eventsource/stores/sqlstore"
 	_ "github.com/lib/pq"
+	"github.com/oklog/ulid"
 )
 
 func TestSaveLoad(t *testing.T) {
@@ -23,31 +26,27 @@ func TestSaveLoad(t *testing.T) {
 	}
 	defer db.Close()
 
-	store := sqlstore.New(db, "events")
-
-	aggID := "10261bb3-37f2-4718-8b44-112bbedf79bc"
-	userID := "ef2f2eaa-7495-4c28-9814-33d3cdd89da7"
-	event := eventsource.Record{
-		AggregateID: aggID,
-		UserID:      userID,
-		Type:        "TestEvent",
-		Timestamp:   time.Now(),
-		Data:        []byte("hejhopp"),
-	}
-	if err := store.Save(event); err != nil {
-		t.Errorf("Expected err to be nil: %s", err)
-	}
-
-	records, err := store.Load(aggID)
+	events, err := sqlstore.CreateTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
 	if err != nil {
-		t.Errorf("Expected err to be nil: %s", err)
+		t.Errorf("unable to create events err: %v", err)
 	}
-	if len(records) != 1 {
-		t.Errorf("Expected one result from store, got %d", len(records))
+	err = sqlstore.DeleteEvents(db, events)
+	if err != nil {
+		t.Errorf("Unable to delete events: %v got err:%v", events, err)
 	}
+}
 
-	if _, err := db.Exec("DELETE FROM events WHERE aggregate_id = $1", aggID); err != nil {
-		t.Logf("Clean up failed: %s", err)
+func TestULID(t *testing.T) {
+	var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	ulidNow := ulid.Now()
+	var ulids []string
+	ulidMap := make(map[string]int, 10000)
+	for i := 0; i < 10000; i++ {
+		ulids = append(ulids, ulid.MustNew(ulidNow, entropy).String())
+		ulidMap[ulids[i]] = i
+		if i > 0 {
+			assert.True(t, ulids[i] > ulids[i-1])
+		}
 	}
-
+	assert.Equal(t, len(ulidMap), 10000)
 }

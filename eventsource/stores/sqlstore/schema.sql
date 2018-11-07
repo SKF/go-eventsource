@@ -3,7 +3,7 @@ CREATE TABLE events (
     sequence_id character(26) PRIMARY KEY,
     aggregate_id uuid,
     user_id uuid,
-    created_at timestamp with time zone NOT NULL,
+    created_at bigint NOT NULL,
     type character varying(255),
     data bytea
 );

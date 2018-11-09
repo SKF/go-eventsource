@@ -55,14 +55,14 @@ func (o SerializerMock) Marshal(event Event) (data []byte, err error) {
 }
 
 // Save is a mock
-func (o StoreMock) Save(record Record) error {
-	args := o.Called(record)
+func (o StoreMock) Save(records ...Record) error {
+	args := o.Called(records)
 	return args.Error(0)
 }
 
 // SaveWithContext is a mock
-func (o StoreMock) SaveWithContext(ctx context.Context, record Record) error {
-	args := o.Called(ctx, record)
+func (o StoreMock) SaveWithContext(ctx context.Context, records ...Record) error {
+	args := o.Called(ctx, records)
 	return args.Error(0)
 }
 

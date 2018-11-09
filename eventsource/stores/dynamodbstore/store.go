@@ -28,20 +28,22 @@ func New(sess *session.Session, tableName string) eventsource.Store {
 }
 
 // Save ...
-func (store *store) Save(record eventsource.Record) (err error) {
-	return store.SaveWithContext(context.Background(), record)
+func (store *store) Save(records ...eventsource.Record) (err error) {
+	return store.SaveWithContext(context.Background(), records...)
 }
 
 // SaveWithContext ...
-func (store *store) SaveWithContext(ctx context.Context, record eventsource.Record) (err error) {
-	result, err := dynamodbattribute.MarshalMap(record)
-	if err != nil {
-		return
+func (store *store) SaveWithContext(ctx context.Context, records ...eventsource.Record) (err error) {
+	for _, record := range records {
+		result, err := dynamodbattribute.MarshalMap(record)
+		if err != nil {
+			return err
+		}
+		_, err = store.db.PutItemWithContext(ctx, &dynamodb.PutItemInput{
+			TableName: &store.tableName,
+			Item:      result,
+		})
 	}
-	_, err = store.db.PutItemWithContext(ctx, &dynamodb.PutItemInput{
-		TableName: &store.tableName,
-		Item:      result,
-	})
 	return
 }
 

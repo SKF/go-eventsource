@@ -27,23 +27,31 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 }
 
 // Save ...
-func (store *store) Save(record eventsource.Record) (err error) {
-	return store.SaveWithContext(context.Background(), record)
+func (store *store) Save(records ...eventsource.Record) (err error) {
+	return store.SaveWithContext(context.Background(), records...)
 }
 
 // SaveWithContext ...
-func (store *store) SaveWithContext(ctx context.Context, record eventsource.Record) (err error) {
-	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(saveSQL, store.tablename))
+func (store *store) SaveWithContext(ctx context.Context, records ...eventsource.Record) (err error) {
+	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return
+	}
+
+	stmt, err := tx.PrepareContext(ctx, fmt.Sprintf(saveSQL, store.tablename))
+	if err != nil {
+		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.ExecContext(ctx, record.AggregateID, record.SequenceID, record.Timestamp, record.UserID, record.Type, record.Data)
-	if err != nil {
-		return
+	for _, record := range records {
+		_, err = stmt.ExecContext(ctx, record.AggregateID, record.SequenceID, record.Timestamp, record.UserID, record.Type, record.Data)
+		if err != nil {
+			return err
+		}
 	}
-	return nil
+
+	return tx.Commit()
 }
 
 // Load ...

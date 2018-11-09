@@ -13,8 +13,8 @@ import (
 
 // Store is a interface
 type Store interface {
-	Save(record Record) error
-	SaveWithContext(ctx context.Context, record Record) error
+	Save(records ...Record) error
+	SaveWithContext(ctx context.Context, records ...Record) error
 	Load(id string) (record []Record, err error)
 	LoadWithContext(ctx context.Context, id string) (record []Record, err error)
 }
@@ -82,25 +82,29 @@ func (repo *repository) Save(events ...Event) (err error) {
 
 // SaveWithContext persists the event to the repo
 func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (err error) {
+	records := []Record{}
 	for _, event := range events {
 		var data []byte
 		if data, err = repo.serializer.Marshal(event); err != nil {
 			return
 		}
 
-		record := Record{
+		records = append(records, Record{
 			AggregateID: event.GetAggregateID(),
 			SequenceID:  NewULID(),
 			Timestamp:   time.Now().UnixNano(),
 			Type:        reflect.TypeOf(event).Name(),
 			Data:        data,
 			UserID:      event.GetUserID(),
-		}
+		})
+	}
 
-		if err = repo.store.SaveWithContext(ctx, record); err != nil {
-			return
-		}
+	if err = repo.store.SaveWithContext(ctx, records...); err != nil {
+		return
+	}
 
+	for idx, record := range records {
+		event := events[idx]
 		if eventOnSave, ok := event.(EventOnSave); ok {
 			err = eventOnSave.OnSave(record)
 			if err != nil {

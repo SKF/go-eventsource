@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/SKF/go-eventsource/eventsource"
+	"github.com/SKF/go-utility/log"
 )
 
 type store struct {
@@ -51,7 +52,15 @@ func (store *store) SaveWithContext(ctx context.Context, records ...eventsource.
 		}
 	}
 
-	return tx.Commit()
+	if err = tx.Commit(); err != nil {
+		if errRollback = tx.Rollback(); errRollback != nil {
+			log.Errorf("Rollback error: %s", err)
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // Load ...

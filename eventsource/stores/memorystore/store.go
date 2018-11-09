@@ -18,17 +18,19 @@ func New() eventsource.Store {
 }
 
 // Save ...
-func (store *store) Save(record eventsource.Record) (err error) {
-	return store.SaveWithContext(context.Background(), record)
+func (store *store) Save(records ...eventsource.Record) (err error) {
+	return store.SaveWithContext(context.Background(), records...)
 }
 
 // SaveWithContext ...
-func (mem *store) SaveWithContext(_ context.Context, record eventsource.Record) error {
-	id := record.AggregateID
-	if rows, ok := mem.Data[id]; ok {
-		mem.Data[id] = append(rows, record)
-	} else {
-		mem.Data[id] = []eventsource.Record{record}
+func (mem *store) SaveWithContext(_ context.Context, records ...eventsource.Record) error {
+	for _, record := range records {
+		id := record.AggregateID
+		if rows, ok := mem.Data[id]; ok {
+			mem.Data[id] = append(rows, record)
+		} else {
+			mem.Data[id] = []eventsource.Record{record}
+		}
 	}
 
 	return nil

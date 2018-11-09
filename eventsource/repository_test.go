@@ -188,13 +188,12 @@ func Test_RepoLoadFail_AggrOnErrDeleted(t *testing.T) {
 
 func Test_RepoSaveSuccess(t *testing.T) {
 	storeMock, serializerMock, _ := setupMocks()
-
 	testEvent, testData := createMockDataForSave()
 
 	ctx := context.Background()
 	serializerMock.On("Marshal", testEvent).Return(testData, nil)
-	storeMock.On("SaveWithContext", ctx, mock.MatchedBy(func(r Record) bool {
-		return matchRecord(r, testEvent, testData)
+	storeMock.On("SaveWithContext", ctx, mock.MatchedBy(func(rs []Record) bool {
+		return len(rs) == 1 && matchRecord(rs[0], testEvent, testData)
 	})).Return(nil)
 
 	repo := NewRepository(storeMock, serializerMock)

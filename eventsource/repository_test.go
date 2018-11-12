@@ -249,7 +249,7 @@ func Test_RepoOnSaveWithContext_SaveFail(t *testing.T) {
 	storeMock, serializerMock, _ := setupMocks()
 
 	expectedError := errors.New("OnSaveWithContextFailed")
-	testEvent := OnSaveEvent{
+	testEvent := OnSaveEventWithContext{
 		BaseEvent:   &BaseEvent{AggregateID: "123", UserID: "KalleKula"},
 		OnSaveError: expectedError,
 	}

@@ -6,7 +6,9 @@ before_install:
   - curl https://glide.sh/get | sh
 install:
   - glide install
+  - go get honnef.co/go/tools/cmd/megacheck
 before_script:
   - go vet ./...
+  - megacheck $(go list ./... | grep -v /vendor/)
 script:
   - go test ./... -race -short

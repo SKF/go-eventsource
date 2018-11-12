@@ -11,6 +11,11 @@ import (
 	"github.com/oklog/ulid"
 )
 
+var (
+	ErrDeleted   = errors.New("Not found (was deleted)")
+	ErrNoHistory = errors.New("No history found")
+)
+
 // Store is a interface
 type Store interface {
 	Save(records ...Record) error
@@ -121,11 +126,6 @@ func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (e
 	}
 	return nil
 }
-
-var (
-	ErrDeleted   = errors.New("Not found (was deleted)")
-	ErrNoHistory = errors.New("No history found")
-)
 
 // Load rehydrates the repo
 func (repo repository) Load(id string, aggr Aggregate) (_ bool, err error) {

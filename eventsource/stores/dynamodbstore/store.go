@@ -39,10 +39,14 @@ func (store *store) SaveWithContext(ctx context.Context, records ...eventsource.
 		if err != nil {
 			return err
 		}
+
 		_, err = store.db.PutItemWithContext(ctx, &dynamodb.PutItemInput{
 			TableName: &store.tableName,
 			Item:      result,
 		})
+		if err != nil {
+			return err
+		}
 	}
 	return
 }

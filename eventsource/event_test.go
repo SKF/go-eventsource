@@ -6,8 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var e Event = &BaseEvent{}
-
 func Test_GetAggregatedID(t *testing.T) {
 	var aggID = "123"
 	var testEvent = BaseEvent{aggID, "dontcare"}

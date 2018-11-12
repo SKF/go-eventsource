@@ -77,8 +77,10 @@ func (store *store) LoadWithContext(ctx context.Context, id string) (records []e
 	rows, err := stmt.QueryContext(ctx, id)
 	for rows.Next() {
 		var record eventsource.Record
-		// aggregate_id, sequence_id, created_at, user_id, type, data
-		if err = rows.Scan(&record.AggregateID, &record.SequenceID, &record.Timestamp, &record.UserID, &record.Type, &record.Data); err != nil {
+		if err = rows.Scan(
+			&record.AggregateID, &record.SequenceID, &record.Timestamp,
+			&record.UserID, &record.Type, &record.Data,
+		); err != nil {
 			return
 		}
 		records = append(records, record)

@@ -13,8 +13,10 @@ To create a new repository:
 It has an interface for saving events and loading an aggregate.
 ```
 type Repository interface {
-	Save(events ...Event) (error)
-	Load(id string, aggr Aggregate) (error)
+	Save(events ...Event) (err error)
+	SaveWithContext(ctx context.Context, events ...Event) (err error)
+	Load(id string, aggr Aggregate) (deleted bool, err error)
+	LoadWithContext(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 }
 ```
 
@@ -32,8 +34,10 @@ If you want to add your own store or serializer, the package has these defined i
 
 ```
 type Store interface {
-	Save(record Record) error
-	Load(id string) ([]Record, error)
+	Save(records ...Record) error
+	SaveWithContext(ctx context.Context, records ...Record) error
+	Load(id string) (record []Record, err error)
+	LoadWithContext(ctx context.Context, id string) (record []Record, err error)
 }
 ```
 ```

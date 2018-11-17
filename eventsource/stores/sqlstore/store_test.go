@@ -1,4 +1,4 @@
-package sqlstore_test
+package sqlstore
 
 import (
 	"database/sql"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/SKF/go-eventsource/eventsource/stores/sqlstore"
 	_ "github.com/lib/pq"
 	"github.com/oklog/ulid"
 )
@@ -26,11 +25,11 @@ func TestSaveLoad(t *testing.T) {
 	}
 	defer db.Close()
 
-	events, err := sqlstore.CreateTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
+	events, err := createTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
 	if err != nil {
 		t.Errorf("unable to create events err: %v", err)
 	}
-	err = sqlstore.DeleteEvents(db, events)
+	err = deleteEvents(db, events)
 	if err != nil {
 		t.Errorf("Unable to delete events: %v got err:%v", events, err)
 	}

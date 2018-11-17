@@ -18,11 +18,16 @@ var (
 
 // Store is a interface
 type Store interface {
-	Save(records ...Record) error
-	SaveWithContext(ctx context.Context, records ...Record) error
-	Load(id string) (record []Record, err error)
-	LoadWithContext(ctx context.Context, id string) (record []Record, err error)
+	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
+	Load(ctx context.Context, id string) (record []Record, err error)
 }
+
+type StoreTransaction interface {
+	Save() error
+	Rollback() error
+}
+
+type RollbackFunc func() error
 
 // Aggregate is a interface
 type Aggregate interface {
@@ -38,8 +43,8 @@ type Serializer interface {
 
 // Repository is a interface
 type Repository interface {
-	Save(events ...Event) (err error)
-	SaveWithContext(ctx context.Context, events ...Event) (err error)
+	Save(events ...Event) (RollbackFunc, error)
+	SaveWithContext(ctx context.Context, events ...Event) (RollbackFunc, error)
 	Load(id string, aggr Aggregate) (deleted bool, err error)
 	LoadWithContext(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 }
@@ -81,12 +86,13 @@ func NewULID() string {
 }
 
 // Save persists the event to the repo
-func (repo *repository) Save(events ...Event) (err error) {
+func (repo *repository) Save(events ...Event) (RollbackFunc, error) {
 	return repo.SaveWithContext(context.Background(), events...)
 }
 
 // SaveWithContext persists the event to the repo
-func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (err error) {
+func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (rollback RollbackFunc, err error) {
+	rollback = func() error { return nil }
 	records := []Record{}
 	for _, event := range events {
 		var data []byte
@@ -104,9 +110,16 @@ func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (e
 		})
 	}
 
-	if err = repo.store.SaveWithContext(ctx, records...); err != nil {
+	tx, err := repo.store.NewTransaction(ctx, records...)
+	if err != nil {
 		return
 	}
+
+	if err = tx.Save(); err != nil {
+		return
+	}
+
+	rollback = tx.Rollback
 
 	for idx, record := range records {
 		event := events[idx]
@@ -124,7 +137,8 @@ func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (e
 			}
 		}
 	}
-	return nil
+
+	return
 }
 
 // Load rehydrates the repo
@@ -134,7 +148,7 @@ func (repo repository) Load(id string, aggr Aggregate) (_ bool, err error) {
 
 // LoadWithContext rehydrates the repo
 func (repo repository) LoadWithContext(ctx context.Context, id string, aggr Aggregate) (_ bool, err error) {
-	history, err := repo.store.LoadWithContext(ctx, id)
+	history, err := repo.store.Load(ctx, id)
 	if err != nil {
 		return
 	}

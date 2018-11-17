@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -10,8 +11,8 @@ import (
 	"github.com/SKF/go-utility/uuid"
 )
 
-// CreateTestEvents - create some random test events in sequence
-func CreateTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
+// createTestEvents - create some random test events in sequence
+func createTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
 	result = []eventsource.Record{}
 
 	store := New(db, "events")
@@ -37,11 +38,19 @@ func CreateTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 			Data:        eventData,
 		}
 
-		if err = store.Save(event); err != nil {
+		ctx := context.Background()
+
+		var tx eventsource.StoreTransaction
+		if tx, err = store.NewTransaction(ctx, event); err != nil {
 			return
 		}
+
+		if err = tx.Save(); err != nil {
+			return
+		}
+
 		var records []eventsource.Record
-		records, err = store.Load(aggID.String())
+		records, err = store.Load(ctx, aggID.String())
 		if err != nil {
 			return
 		}
@@ -59,8 +68,8 @@ func CreateTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 	return
 }
 
-// DeleteEvents - delete events (using the SequenceID)
-func DeleteEvents(db *sql.DB, events []eventsource.Record) error {
+// deleteEvents - delete events (using the SequenceID)
+func deleteEvents(db *sql.DB, events []eventsource.Record) error {
 	for _, e := range events {
 		_, err := db.Exec("DELETE from events WHERE sequence_id = $1", e.SequenceID)
 		if err != nil {

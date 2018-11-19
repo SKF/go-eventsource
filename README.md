@@ -7,25 +7,28 @@ The package is under development and the interfaces may change.
 [Event Sourcing Basics](http://eventstore.org.s3-website.eu-west-2.amazonaws.com/docs/event-sourcing-basics)
 
 # How to use it
+
 To create a new repository:
 `NewRepository(store, serializer)`
 
 It has an interface for saving events and loading an aggregate.
+
 ```
 type Repository interface {
-	Save(events ...Event) (err error)
-	SaveWithContext(ctx context.Context, events ...Event) (err error)
-	Load(id string, aggr Aggregate) (deleted bool, err error)
-	LoadWithContext(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
+	Save(ctx context.Context, events ...Event) error
+	SaveTransaction(ctx context.Context, events ...Event) (StoreTransaction, error)
+	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 }
 ```
 
 The package comes with one serializer and two stores:
 
 Included serializer:
+
 - `json`
 
 Included stores:
+
 - `dynamodb`
 - `memory`
 - `sql`
@@ -34,12 +37,16 @@ If you want to add your own store or serializer, the package has these defined i
 
 ```
 type Store interface {
-	Save(records ...Record) error
-	SaveWithContext(ctx context.Context, records ...Record) error
-	Load(id string) (record []Record, err error)
-	LoadWithContext(ctx context.Context, id string) (record []Record, err error)
+	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
+	Load(ctx context.Context, id string) (record []Record, err error)
+}
+
+type StoreTransaction interface {
+	Commit() error
+	Rollback() error
 }
 ```
+
 ```
 type Serializer interface {
 	Unmarshal(data []byte, eventType string) (Event, error)

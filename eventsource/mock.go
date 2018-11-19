@@ -54,26 +54,38 @@ func (o SerializerMock) Marshal(event Event) (data []byte, err error) {
 	return args.Get(0).([]byte), args.Error(1)
 }
 
+// StoreTransactionMock is a mock
+type StoreTransactionMock struct {
+	*mock.Mock
+}
+
+// CreateStoreTransactionMock returns a store transaction mock
+func CreateStoreTransactionMock() *StoreTransactionMock {
+	return &StoreTransactionMock{
+		Mock: &mock.Mock{},
+	}
+}
+
 // Save is a mock
-func (o StoreMock) Save(records ...Record) error {
-	args := o.Called(records)
+func (o StoreTransactionMock) Commit() error {
+	args := o.Called()
 	return args.Error(0)
 }
 
-// SaveWithContext is a mock
-func (o StoreMock) SaveWithContext(ctx context.Context, records ...Record) error {
-	args := o.Called(ctx, records)
+// Rollback is a mock
+func (o StoreTransactionMock) Rollback() error {
+	args := o.Called()
 	return args.Error(0)
+}
+
+// NewTransaction is a mock
+func (o StoreMock) NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error) {
+	args := o.Called(ctx, records)
+	return args.Get(0).(StoreTransaction), args.Error(1)
 }
 
 // Load is a mock
-func (o StoreMock) Load(id string) (record []Record, err error) {
-	args := o.Called(id)
-	return args.Get(0).([]Record), args.Error(1)
-}
-
-// LoadWithContext is a mock
-func (o StoreMock) LoadWithContext(ctx context.Context, id string) (record []Record, err error) {
+func (o StoreMock) Load(ctx context.Context, id string) (record []Record, err error) {
 	args := o.Called(ctx, id)
 	return args.Get(0).([]Record), args.Error(1)
 }
@@ -85,9 +97,7 @@ func (o AggregatorMock) On(ctx context.Context, event Event) error {
 }
 
 // SetAggregateID is not implemented
-func (o AggregatorMock) SetAggregateID(id string) {
-
-}
+func (o AggregatorMock) SetAggregateID(id string) {}
 
 // RepositoryMock is a mock
 type RepositoryMock struct {
@@ -102,25 +112,19 @@ func CreateRepositoryMock() *RepositoryMock {
 }
 
 // Save is a mock
-func (r RepositoryMock) Save(events ...Event) (err error) {
-	args := r.Called(events)
-	return args.Error(0)
-}
-
-// SaveWithContext is a mock
-func (r RepositoryMock) SaveWithContext(ctx context.Context, events ...Event) (err error) {
+func (r RepositoryMock) Save(ctx context.Context, events ...Event) error {
 	args := r.Called(ctx, events)
 	return args.Error(0)
 }
 
-// Load is a mock
-func (r RepositoryMock) Load(id string, aggr Aggregate) (deleted bool, err error) {
-	args := r.Called(id, aggr)
-	return args.Bool(0), args.Error(1)
+// SaveTransaction is a mock
+func (r RepositoryMock) SaveTransaction(ctx context.Context, events ...Event) (StoreTransaction, error) {
+	args := r.Called(ctx, events)
+	return args.Get(0).(StoreTransaction), args.Error(1)
 }
 
-// LoadWithContext is a mock
-func (r RepositoryMock) LoadWithContext(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error) {
+// Load is a mock
+func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error) {
 	args := r.Called(ctx, id, aggr)
 	return args.Bool(0), args.Error(1)
 }

@@ -27,40 +27,11 @@ func New(sess *session.Session, tableName string) eventsource.Store {
 	}
 }
 
-// Save ...
-func (store *store) Save(records ...eventsource.Record) (err error) {
-	return store.SaveWithContext(context.Background(), records...)
-}
-
-// SaveWithContext ...
-func (store *store) SaveWithContext(ctx context.Context, records ...eventsource.Record) (err error) {
-	for _, record := range records {
-		result, err := dynamodbattribute.MarshalMap(record)
-		if err != nil {
-			return err
-		}
-
-		_, err = store.db.PutItemWithContext(ctx, &dynamodb.PutItemInput{
-			TableName: &store.tableName,
-			Item:      result,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return
-}
-
 //Load ...
-func (store *store) Load(id string) (records []eventsource.Record, err error) {
-	return store.LoadWithContext(context.Background(), id)
-}
-
-//LoadWithContext ...
-func (store *store) LoadWithContext(ctx context.Context, id string) (records []eventsource.Record, err error) {
+func (store *store) Load(ctx context.Context, id string) (records []eventsource.Record, err error) {
 	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{
-		":id": &dynamodb.AttributeValue{S: &id},
+		":id": {S: &id},
 	}
 
 	input := dynamodb.QueryInput{

@@ -3,6 +3,7 @@ package eventsource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"reflect"
 	"sync"
@@ -18,10 +19,13 @@ var (
 
 // Store is a interface
 type Store interface {
-	Save(records ...Record) error
-	SaveWithContext(ctx context.Context, records ...Record) error
-	Load(id string) (record []Record, err error)
-	LoadWithContext(ctx context.Context, id string) (record []Record, err error)
+	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
+	Load(ctx context.Context, id string) (record []Record, err error)
+}
+
+type StoreTransaction interface {
+	Commit() error
+	Rollback() error
 }
 
 // Aggregate is a interface
@@ -38,10 +42,9 @@ type Serializer interface {
 
 // Repository is a interface
 type Repository interface {
-	Save(events ...Event) (err error)
-	SaveWithContext(ctx context.Context, events ...Event) (err error)
-	Load(id string, aggr Aggregate) (deleted bool, err error)
-	LoadWithContext(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
+	Save(ctx context.Context, events ...Event) error
+	SaveTransaction(ctx context.Context, events ...Event) (StoreTransaction, error)
+	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 }
 
 // NewRepository returns a new repository
@@ -81,17 +84,26 @@ func NewULID() string {
 }
 
 // Save persists the event to the repo
-func (repo *repository) Save(events ...Event) (err error) {
-	return repo.SaveWithContext(context.Background(), events...)
+func (repo *repository) Save(ctx context.Context, events ...Event) error {
+	tx, err := repo.SaveTransaction(ctx, events...)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		rollbackErr := tx.Rollback()
+		return fmt.Errorf("Rollback error: %+v, Save error: %+v", rollbackErr, err)
+	}
+
+	return nil
 }
 
-// SaveWithContext persists the event to the repo
-func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (err error) {
+func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (StoreTransaction, error) {
 	records := []Record{}
 	for _, event := range events {
-		var data []byte
-		if data, err = repo.serializer.Marshal(event); err != nil {
-			return
+		data, err := repo.serializer.Marshal(event)
+		if err != nil {
+			return nil, err
 		}
 
 		records = append(records, Record{
@@ -104,37 +116,12 @@ func (repo *repository) SaveWithContext(ctx context.Context, events ...Event) (e
 		})
 	}
 
-	if err = repo.store.SaveWithContext(ctx, records...); err != nil {
-		return
-	}
-
-	for idx, record := range records {
-		event := events[idx]
-		if eventOnSave, ok := event.(EventOnSave); ok {
-			err = eventOnSave.OnSave(record)
-			if err != nil {
-				return
-			}
-		}
-
-		if eventOnSave, ok := event.(EventOnSaveWithContext); ok {
-			err = eventOnSave.OnSave(ctx, record)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return nil
+	return repo.store.NewTransaction(ctx, records...)
 }
 
 // Load rehydrates the repo
-func (repo repository) Load(id string, aggr Aggregate) (_ bool, err error) {
-	return repo.LoadWithContext(context.Background(), id, aggr)
-}
-
-// LoadWithContext rehydrates the repo
-func (repo repository) LoadWithContext(ctx context.Context, id string, aggr Aggregate) (_ bool, err error) {
-	history, err := repo.store.LoadWithContext(ctx, id)
+func (repo repository) Load(ctx context.Context, id string, aggr Aggregate) (_ bool, err error) {
+	history, err := repo.store.Load(ctx, id)
 	if err != nil {
 		return
 	}

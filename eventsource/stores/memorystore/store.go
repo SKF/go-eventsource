@@ -2,7 +2,6 @@ package memorystore
 
 import (
 	"context"
-	"errors"
 
 	"github.com/SKF/go-eventsource/eventsource"
 )
@@ -22,5 +21,5 @@ func (mem *store) Load(_ context.Context, id string) (evt []eventsource.Record, 
 	if rows, ok := mem.Data[id]; ok {
 		return rows, nil
 	}
-	return evt, errors.New("Not found")
+	return evt, nil
 }

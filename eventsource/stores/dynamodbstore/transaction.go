@@ -50,11 +50,10 @@ func (tx *transaction) Commit() (err error) {
 func (tx *transaction) Rollback() error {
 	for _, record := range tx.saved {
 		_, err := tx.store.db.DeleteItemWithContext(tx.ctx, &dynamodb.DeleteItemInput{
-			TableName:           &tx.store.tableName,
-			ConditionExpression: aws.String("aggregateId = :id and timestamp = :timestamp"),
-			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-				":id":        {S: &record.AggregateID},
-				":timestamp": {N: aws.String(fmt.Sprintf("%d", record.Timestamp))},
+			TableName: &tx.store.tableName,
+			Key: map[string]*dynamodb.AttributeValue{
+				"aggregateId": {S: &record.AggregateID},
+				"timestamp":   {N: aws.String(fmt.Sprintf("%d", record.Timestamp))},
 			},
 		})
 		if err != nil {

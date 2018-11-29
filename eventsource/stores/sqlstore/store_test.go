@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"database/sql"
 	"math/rand"
 	"os"
@@ -8,10 +9,55 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/SKF/go-eventsource/eventsource"
 
 	_ "github.com/lib/pq"
 	"github.com/oklog/ulid"
 )
+
+func TestLoadNewerThan(t *testing.T) {
+	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
+		t.Log("Skipping postgres e2e test")
+		t.Skip()
+	}
+
+	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
+	if err != nil {
+		t.Errorf("Could not connect to db: %s", err)
+	}
+	defer db.Close()
+
+	events, err := createTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
+	if err != nil {
+		t.Errorf("unable to create events err: %v", err)
+	}
+
+	var records []eventsource.Record
+
+	store := New(db, "events")
+	records, _, err = store.LoadNewerThan(context.Background(), events[0].SequenceID)
+
+	if err != nil {
+		t.Errorf("LoadNewerThan failed with: %s", err)
+	}
+	if len(records) != 9 {
+		t.Errorf("Expected nine records from store, got %d", len(records))
+	}
+
+	records, _, err = store.LoadNewerThan(context.Background(), events[len(events)-2].SequenceID)
+
+	if err != nil {
+		t.Errorf("LoadNewerThan failed with: %s", err)
+	}
+	if len(records) != 1 {
+		t.Errorf("Expected one record from store, got %d", len(records))
+	}
+
+	err = deleteEvents(db, events)
+	if err != nil {
+		t.Errorf("Unable to delete events: %v got err:%v", events, err)
+	}
+}
 
 func TestSaveLoad(t *testing.T) {
 	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {

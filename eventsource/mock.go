@@ -66,7 +66,7 @@ func CreateStoreTransactionMock() *StoreTransactionMock {
 	}
 }
 
-// Save is a mock
+// Commit is a mock
 func (o StoreTransactionMock) Commit() error {
 	args := o.Called()
 	return args.Error(0)
@@ -84,10 +84,16 @@ func (o StoreMock) NewTransaction(ctx context.Context, records ...Record) (Store
 	return args.Get(0).(StoreTransaction), args.Error(1)
 }
 
-// Load is a mock
-func (o StoreMock) Load(ctx context.Context, id string) (record []Record, err error) {
-	args := o.Called(ctx, id)
+// LoadAggregate is a mock
+func (o StoreMock) LoadAggregate(ctx context.Context, aggregateID string) (record []Record, err error) {
+	args := o.Called(ctx, aggregateID)
 	return args.Get(0).([]Record), args.Error(1)
+}
+
+// LoadNewerThan is a mock
+func (o StoreMock) LoadNewerThan(ctx context.Context, sequenceID string) (record []Record, hasMore bool, err error) {
+	args := o.Called(ctx, sequenceID)
+	return args.Get(0).([]Record), args.Bool(1), args.Error(2)
 }
 
 // On is a mock
@@ -127,6 +133,12 @@ func (r RepositoryMock) SaveTransaction(ctx context.Context, events ...Event) (S
 func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error) {
 	args := r.Called(ctx, id, aggr)
 	return args.Bool(0), args.Error(1)
+}
+
+// GetRecords is a mock
+func (r RepositoryMock) GetRecords(ctx context.Context, sequenceID string) ([]EventRecord, bool, error) {
+	args := r.Called(ctx, sequenceID)
+	return args.Get(0).([]EventRecord), args.Get(1).(bool), args.Error(1)
 }
 
 var _ Store = &StoreMock{}

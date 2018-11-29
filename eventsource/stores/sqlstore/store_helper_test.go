@@ -50,7 +50,7 @@ func createTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 		}
 
 		var records []eventsource.Record
-		records, err = store.Load(ctx, aggID.String())
+		records, err = store.LoadAggregate(ctx, aggID.String())
 		if err != nil {
 			return
 		}

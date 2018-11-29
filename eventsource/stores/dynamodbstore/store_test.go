@@ -30,26 +30,26 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	err = tx.Commit()
 	require.NoError(t, err)
 
-	records, err := store.Load(ctx, "A")
+	records, err := store.LoadAggregate(ctx, "A")
 	require.NoError(t, err)
 	assert.Len(t, records, 2)
 
-	records, err = store.Load(ctx, "B")
+	records, err = store.LoadAggregate(ctx, "B")
 	require.NoError(t, err)
 	assert.Len(t, records, 1)
 
-	records, err = store.Load(ctx, "C")
+	records, err = store.LoadAggregate(ctx, "C")
 	require.NoError(t, err)
 	assert.Len(t, records, 0)
 
 	err = tx.Rollback()
 	require.NoError(t, err)
 
-	records, err = store.Load(ctx, "A")
+	records, err = store.LoadAggregate(ctx, "A")
 	require.NoError(t, err)
 	assert.Len(t, records, 0)
 
-	records, err = store.Load(ctx, "B")
+	records, err = store.LoadAggregate(ctx, "B")
 	require.NoError(t, err)
 	assert.Len(t, records, 0)
 }

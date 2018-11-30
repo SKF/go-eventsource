@@ -35,7 +35,7 @@ func TestLoadNewerThan(t *testing.T) {
 	var records []eventsource.Record
 
 	store := New(db, "events")
-	records, _, err = store.LoadNewerThan(context.Background(), events[0].SequenceID)
+	records, err = store.LoadNewerThan(context.Background(), events[0].SequenceID)
 
 	if err != nil {
 		t.Errorf("LoadNewerThan failed with: %s", err)
@@ -44,7 +44,7 @@ func TestLoadNewerThan(t *testing.T) {
 		t.Errorf("Expected nine records from store, got %d", len(records))
 	}
 
-	records, _, err = store.LoadNewerThan(context.Background(), events[len(events)-2].SequenceID)
+	records, err = store.LoadNewerThan(context.Background(), events[len(events)-2].SequenceID)
 
 	if err != nil {
 		t.Errorf("LoadNewerThan failed with: %s", err)

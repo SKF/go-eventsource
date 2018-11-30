@@ -62,7 +62,7 @@ func (store *store) LoadAggregate(ctx context.Context, aggregateID string) (reco
 	return
 }
 
-func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, hasMore bool, err error) {
+func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
 	err = errors.New("Operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return

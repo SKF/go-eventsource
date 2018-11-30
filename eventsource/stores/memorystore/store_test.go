@@ -24,7 +24,7 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	err = tx.Commit()
 	require.NoError(t, err)
 
-	records, _, err := store.LoadNewerThan(ctx, "1")
+	records, err := store.LoadNewerThan(ctx, "1")
 	require.NoError(t, err)
 	assert.Len(t, records, 3)
 	assert.Equal(t, records[0].SequenceID, "2")

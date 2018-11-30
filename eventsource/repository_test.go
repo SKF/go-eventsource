@@ -78,12 +78,12 @@ func Test_RepoGetRecords(t *testing.T) {
 	otherEvent := OtherEvent{BaseEvent: &baseEvent, OtherEventField: 42}
 
 	ctx := context.Background()
-	storeMock.On("LoadNewerThan", ctx, "2").Return(filterHistoryBySeqID(history, "2"), false, nil)
+	storeMock.On("LoadNewerThan", ctx, "2").Return(filterHistoryBySeqID(history, "2"), nil)
 	serializerMock.On("Unmarshal", []byte{byte(1)}, "BaseEvent").Return(baseEvent, nil)
 	serializerMock.On("Unmarshal", []byte{byte(3)}, "OtherEvent").Return(otherEvent, nil)
 
 	repo := NewRepository(storeMock, serializerMock)
-	records, _, err := repo.GetRecords(ctx, "2")
+	records, err := repo.GetRecords(ctx, "2")
 
 	aggregatorMock.Mock.AssertExpectations(t)
 	serializerMock.AssertExpectations(t)

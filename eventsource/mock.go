@@ -91,9 +91,9 @@ func (o StoreMock) LoadAggregate(ctx context.Context, aggregateID string) (recor
 }
 
 // LoadNewerThan is a mock
-func (o StoreMock) LoadNewerThan(ctx context.Context, sequenceID string) (record []Record, hasMore bool, err error) {
+func (o StoreMock) LoadNewerThan(ctx context.Context, sequenceID string) (record []Record, err error) {
 	args := o.Called(ctx, sequenceID)
-	return args.Get(0).([]Record), args.Bool(1), args.Error(2)
+	return args.Get(0).([]Record), args.Error(1)
 }
 
 // On is a mock
@@ -136,9 +136,9 @@ func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (de
 }
 
 // GetRecords is a mock
-func (r RepositoryMock) GetRecords(ctx context.Context, sequenceID string) ([]EventRecord, bool, error) {
+func (r RepositoryMock) GetRecords(ctx context.Context, sequenceID string) ([]EventRecord, error) {
 	args := r.Called(ctx, sequenceID)
-	return args.Get(0).([]EventRecord), args.Get(1).(bool), args.Error(1)
+	return args.Get(0).([]EventRecord), args.Error(1)
 }
 
 var _ Store = &StoreMock{}

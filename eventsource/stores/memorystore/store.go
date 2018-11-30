@@ -28,7 +28,7 @@ func (store *store) LoadAggregate(_ context.Context, aggregateID string) (record
 
 
 
-func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, hasMore bool, err error) {
+func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
 	for _, aggregate := range store.Data {
 		for _, row := range aggregate {
 			if row.SequenceID > sequenceID {

@@ -24,7 +24,7 @@ var (
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
 	LoadAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
-	LoadNewerThan(ctx context.Context, sequenceID string) (record []Record, hasMore bool, err error)
+	LoadNewerThan(ctx context.Context, sequenceID string) (record []Record, err error)
 }
 
 // StoreTransaction encapsulates a write operation to a Store, allowing the caller
@@ -63,7 +63,7 @@ type Repository interface {
 
 	// Get records and unmarshalled events for all aggregates. Only include records
 	// newer than the given sequence ID (see https://github.com/oklog/ulid)
-	GetRecords(ctx context.Context, sequenceID string) (eventRecords []EventRecord, hasMore bool, err error)
+	GetRecords(ctx context.Context, sequenceID string) (eventRecords []EventRecord, err error)
 }
 
 // NewRepository returns a new repository
@@ -174,9 +174,9 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 	return
 }
 
-func (repo repository) GetRecords(ctx context.Context, sequenceID string) (eventRecords []EventRecord, hasMore bool, err error) {
+func (repo repository) GetRecords(ctx context.Context, sequenceID string) (eventRecords []EventRecord, err error) {
 	var records []Record
-	records, hasMore, err = repo.store.LoadNewerThan(ctx, sequenceID)
+	records, err = repo.store.LoadNewerThan(ctx, sequenceID)
 	for _, record := range(records) {
 		var event Event
 		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {

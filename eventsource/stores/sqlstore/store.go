@@ -15,8 +15,8 @@ type store struct {
 
 const (
 	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
-	loadAggregateSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 1000000"
-	loadNewerThanSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 ORDER BY sequence_id ASC LIMIT 10000"
+	loadAggregateSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 100000"
+	loadNewerThanSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 ORDER BY sequence_id ASC LIMIT 100000"
 )
 
 // New ...
@@ -52,7 +52,7 @@ func (store *store) LoadAggregate(ctx context.Context, aggregateID string) (reco
 }
 
 // LoadNewerThan ...
-func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, hasMore bool, err error) {
+func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
 	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(loadNewerThanSQL, store.tablename))
 	if err != nil {
 		return
@@ -68,13 +68,6 @@ func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (recor
 			return
 		}
 		records = append(records, record)
-	}
-	if len(records) == 10000 {
-		// There seems to be no way to determine if result was limited by LIMIT BY
-		// clause. This test erroneously sets hasMore if the number of records
-		// matching the query is exactly 10000. However, that would only result in
-		// an extra call to this method returning no records.
-		hasMore = true
 	}
 	if err = rows.Err(); err != nil {
 		return

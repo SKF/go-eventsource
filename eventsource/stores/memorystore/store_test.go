@@ -17,7 +17,7 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	}...)
 	require.NoError(t, err)
 
-	err = tx.Save()
+	err = tx.Commit()
 	require.NoError(t, err)
 
 	records, err := s.Load(nil, "A")

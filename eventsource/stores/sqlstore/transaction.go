@@ -35,8 +35,8 @@ func (store *store) NewTransaction(ctx context.Context, records ...eventsource.R
 	}, nil
 }
 
-// Save ...
-func (tx *transaction) Save() (err error) {
+// Commit ...
+func (tx *transaction) Commit() (err error) {
 	return tx.sqlTx.Commit()
 }
 

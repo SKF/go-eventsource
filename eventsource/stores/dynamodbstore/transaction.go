@@ -23,8 +23,8 @@ func (store *store) NewTransaction(ctx context.Context, records ...eventsource.R
 	}, nil
 }
 
-// Save ...
-func (tx *transaction) Save() (err error) {
+// Commit ...
+func (tx *transaction) Commit() (err error) {
 	for _, record := range tx.records {
 		result, err := dynamodbattribute.MarshalMap(record)
 		if err != nil {

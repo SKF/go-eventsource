@@ -45,7 +45,7 @@ func createTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 			return
 		}
 
-		if err = tx.Save(); err != nil {
+		if err = tx.Commit(); err != nil {
 			return
 		}
 

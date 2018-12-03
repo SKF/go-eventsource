@@ -18,8 +18,8 @@ func (mem *store) NewTransaction(_ context.Context, records ...eventsource.Recor
 	}, nil
 }
 
-// Save ...
-func (tx *transaction) Save() error {
+// Commit ...
+func (tx *transaction) Commit() error {
 	for _, record := range tx.records {
 		id := record.AggregateID
 		if rows, ok := tx.mem.Data[id]; ok {

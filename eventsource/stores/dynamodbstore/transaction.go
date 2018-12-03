@@ -2,9 +2,10 @@ package dynamodbstore
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/SKF/go-eventsource/eventsource"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
@@ -13,6 +14,7 @@ type transaction struct {
 	store   *store
 	ctx     context.Context
 	records []eventsource.Record
+	saved   []eventsource.Record
 }
 
 func (store *store) NewTransaction(ctx context.Context, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
@@ -20,6 +22,7 @@ func (store *store) NewTransaction(ctx context.Context, records ...eventsource.R
 		store:   store,
 		ctx:     ctx,
 		records: records,
+		saved:   []eventsource.Record{},
 	}, nil
 }
 
@@ -38,10 +41,26 @@ func (tx *transaction) Commit() (err error) {
 		if err != nil {
 			return err
 		}
+
+		tx.saved = append(tx.saved, record)
 	}
 	return
 }
 
 func (tx *transaction) Rollback() error {
-	return errors.New("Not supported yet")
+	for _, record := range tx.saved {
+		_, err := tx.store.db.DeleteItemWithContext(tx.ctx, &dynamodb.DeleteItemInput{
+			TableName:           &tx.store.tableName,
+			ConditionExpression: aws.String("aggregateId = :id and timestamp = :timestamp"),
+			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+				":id":        {S: &record.AggregateID},
+				":timestamp": {N: aws.String(fmt.Sprintf("%d", record.Timestamp))},
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

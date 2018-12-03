@@ -27,14 +27,16 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-// Load ...
-func (store *store) LoadAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
-	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(loadAggregateSQL, store.tablename))
+func (store *store) createRecords(ctx context.Context, query string, args ...interface{}) (records []eventsource.Record, err error) {
+	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(query, store.tablename))
 	if err != nil {
 		return
 	}
 	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx, aggregateID)
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return
+	}
 	for rows.Next() {
 		var record eventsource.Record
 		if err = rows.Scan(
@@ -51,26 +53,12 @@ func (store *store) LoadAggregate(ctx context.Context, aggregateID string) (reco
 	return
 }
 
+// Load ...
+func (store *store) LoadAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
+	return store.createRecords(ctx, loadAggregateSQL, aggregateID)
+}
+
 // LoadNewerThan ...
 func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
-	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(loadNewerThanSQL, store.tablename))
-	if err != nil {
-		return
-	}
-	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx, sequenceID)
-	for rows.Next() {
-		var record eventsource.Record
-		if err = rows.Scan(
-			&record.AggregateID, &record.SequenceID, &record.Timestamp,
-			&record.UserID, &record.Type, &record.Data,
-		); err != nil {
-			return
-		}
-		records = append(records, record)
-	}
-	if err = rows.Err(); err != nil {
-		return
-	}
-	return
+	return store.createRecords(ctx, loadNewerThanSQL, sequenceID)
 }

@@ -194,6 +194,7 @@ CREATE TABLE %s (
 	assert.Nil(t, err, "Could not get events")
 	assert.Equal(t, 8, len(events))
 	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID())
+	assert.Nil(t, err, "Could not get events")
 	assert.Equal(t, 1, len(events))
 
 	db.Exec("DROP TABLE $1", tmpTableName)

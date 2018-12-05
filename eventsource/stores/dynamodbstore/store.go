@@ -28,8 +28,8 @@ func New(sess *session.Session, tableName string) eventsource.Store {
 	}
 }
 
-//LoadForAggregate ...
-func (store *store) LoadAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
+//LoadByAggregate ...
+func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
 	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{
 		":id": {S: &aggregateID},
@@ -62,7 +62,15 @@ func (store *store) LoadAggregate(ctx context.Context, aggregateID string) (reco
 	return
 }
 
-func (store *store) LoadNewerThan(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
+// LoadBySequenceID ...
+func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
+	err = errors.New("Operation not supported on DynamoDB")
+	log.Error(err.Error())
+	return
+}
+
+// LoadByTimestamp
+func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64) (records []eventsource.Record, err error) {
 	err = errors.New("Operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return

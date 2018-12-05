@@ -50,15 +50,15 @@ type OtherEvent struct{
 	OtherEventField int
 }
 
-func createMockDataForLoadAggregate() (history []Record, baseEvent BaseEvent, id string) {
+func createMockDataForLoadAggregate() (history []Record, baseEvent *BaseEvent, id string) {
 	history = createMockHistory()
-	baseEvent = BaseEvent{AggregateID: "1-22-333-4444-55555", UserID: "TestMan"}
+	baseEvent = &BaseEvent{AggregateID: "1-22-333-4444-55555", UserID: "TestMan"}
 	id = "1234-1234-1234"
 	return
 }
 
-func createMockDataForSave() (testEvent BaseEvent, testData []byte) {
-	testEvent = BaseEvent{AggregateID: "123", UserID: "KalleKula"}
+func createMockDataForSave() (testEvent *BaseEvent, testData []byte) {
+	testEvent = &BaseEvent{AggregateID: "123", UserID: "KalleKula"}
 	testData = []byte{byte(5)}
 	return
 }
@@ -75,35 +75,33 @@ func Test_RepoGetRecords(t *testing.T) {
 	storeMock, _, serializerMock, aggregatorMock := setupMocks()
 
 	history, baseEvent, _ := createMockDataForLoadAggregate()
-	otherEvent := OtherEvent{BaseEvent: &baseEvent, OtherEventField: 42}
+	otherEvent := &OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
 
 	ctx := context.Background()
-	storeMock.On("LoadNewerThan", ctx, "2").Return(filterHistoryBySeqID(history, "2"), nil)
+	storeMock.On("LoadBySequenceID", ctx, "2").Return(filterHistoryBySeqID(history, "2"), nil)
 	serializerMock.On("Unmarshal", []byte{byte(1)}, "BaseEvent").Return(baseEvent, nil)
 	serializerMock.On("Unmarshal", []byte{byte(3)}, "OtherEvent").Return(otherEvent, nil)
 
 	repo := NewRepository(storeMock, serializerMock)
-	records, err := repo.GetRecords(ctx, "2")
+	records, err := repo.GetEventsBySequenceID(ctx, "2")
 
 	aggregatorMock.Mock.AssertExpectations(t)
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	assert.Nil(t, err)
 	assert.Equal(t, len(records), 2)
-	assert.Equal(t, records[0].Record.Data, []byte{byte(1)})
-	assert.Equal(t, records[1].Record.Data, []byte{byte(3)})
-	assert.Equal(t, records[0].Event.(BaseEvent), baseEvent, true)
-	assert.Equal(t, records[1].Event.(OtherEvent), otherEvent, true)
+	assert.Equal(t, records[0].(*BaseEvent), baseEvent, true)
+	assert.Equal(t, records[1].(*OtherEvent), otherEvent, true)
 }
 
 func Test_RepoLoadSuccess(t *testing.T) {
 	storeMock, _, serializerMock, aggregatorMock := setupMocks()
 
 	history, baseEvent, id := createMockDataForLoadAggregate()
-	otherEvent := OtherEvent{BaseEvent: &baseEvent, OtherEventField: 42}
+	otherEvent := OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
 
 	ctx := context.Background()
-	storeMock.On("LoadAggregate", ctx, id).Return(history, nil)
+	storeMock.On("LoadByAggregate", ctx, id).Return(history, nil)
 	serializerMock.On("Unmarshal", []byte{byte(2)}, "BaseEvent").Return(baseEvent, nil)
 	serializerMock.On("Unmarshal", []byte{byte(0)}, "BaseEvent").Return(baseEvent, nil)
 	serializerMock.On("Unmarshal", []byte{byte(1)}, "BaseEvent").Return(baseEvent, nil)
@@ -129,7 +127,7 @@ func Test_RepoLoadFail_NoHistory(t *testing.T) {
 	history := []Record{}
 	_, _, id := createMockDataForLoadAggregate()
 
-	storeMock.On("LoadAggregate", context.Background(), id).Return(history, nil)
+	storeMock.On("LoadByAggregate", context.Background(), id).Return(history, nil)
 
 	ctx := context.Background()
 	repo := NewRepository(storeMock, serializerMock)
@@ -148,7 +146,7 @@ func Test_RepoLoadFail_StoreLoadErr(t *testing.T) {
 	history := []Record{}
 	_, _, id := createMockDataForLoadAggregate()
 
-	storeMock.On("LoadAggregate", context.Background(), id).Return(history, expectedError)
+	storeMock.On("LoadByAggregate", context.Background(), id).Return(history, expectedError)
 
 	ctx := context.Background()
 	repo := NewRepository(storeMock, serializerMock)
@@ -166,7 +164,7 @@ func Test_RepoLoadFail_UnmarshalErr(t *testing.T) {
 
 	history, baseEvent, id := createMockDataForLoadAggregate()
 
-	storeMock.On("LoadAggregate", context.Background(), id).Return(history, nil)
+	storeMock.On("LoadByAggregate", context.Background(), id).Return(history, nil)
 	serializerMock.On("Unmarshal", []byte{byte(2)}, "BaseEvent").Return(baseEvent, expectedError)
 
 	ctx := context.Background()
@@ -187,7 +185,7 @@ func Test_RepoLoadFail_AggrOnUnkownErr(t *testing.T) {
 	history, baseEvent, id := createMockDataForLoadAggregate()
 
 	ctx := context.Background()
-	storeMock.On("LoadAggregate", ctx, id).Return(history, nil)
+	storeMock.On("LoadByAggregate", ctx, id).Return(history, nil)
 	serializerMock.On("Unmarshal", []byte{byte(2)}, "BaseEvent").Return(baseEvent, nil)
 	aggregatorMock.Mock.On("On", ctx, baseEvent).Return(expectedError)
 
@@ -207,7 +205,7 @@ func Test_RepoLoadFail_AggrOnErrDeleted(t *testing.T) {
 	history, baseEvent, id := createMockDataForLoadAggregate()
 
 	ctx := context.Background()
-	storeMock.On("LoadAggregate", ctx, id).Return(history, nil)
+	storeMock.On("LoadByAggregate", ctx, id).Return(history, nil)
 	serializerMock.On("Unmarshal", []byte{byte(2)}, "BaseEvent").Return(baseEvent, nil)
 	aggregatorMock.Mock.On("On", ctx, baseEvent).Return(ErrDeleted)
 
@@ -290,12 +288,12 @@ func Test_RepoMock_OK(t *testing.T) {
 	ctx := context.Background()
 	repoMock.On("Save", ctx, mock.Anything).Return(nil).Once()
 
-	err := repoMock.Save(ctx, BaseEvent{})
+	err := repoMock.Save(ctx, &BaseEvent{})
 	assert.Nil(t, err)
 
 	expectedError := errors.New("Some error with store.Save")
 	repoMock.On("Save", ctx, mock.Anything).Return(expectedError)
-	err = repoMock.Save(ctx, BaseEvent{})
+	err = repoMock.Save(ctx, &BaseEvent{})
 	assert.EqualError(t, err, expectedError.Error())
 
 	// Load
@@ -310,3 +308,4 @@ func Test_RepoMock_OK(t *testing.T) {
 	assert.EqualError(t, err, expectedError.Error())
 	assert.False(t, deleted)
 }
+

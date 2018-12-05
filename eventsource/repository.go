@@ -23,8 +23,9 @@ var (
 // the event source.
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
-	LoadAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
-	LoadNewerThan(ctx context.Context, sequenceID string) (record []Record, err error)
+	LoadByAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
+	LoadBySequenceID(ctx context.Context, sequenceID string) (record []Record, err error)
+	LoadByTimestamp(ctx context.Context, timestamp int64) (record []Record, err error)
 }
 
 // StoreTransaction encapsulates a write operation to a Store, allowing the caller
@@ -63,7 +64,8 @@ type Repository interface {
 
 	// Get records and unmarshalled events for all aggregates. Only include records
 	// newer than the given sequence ID (see https://github.com/oklog/ulid)
-	GetRecords(ctx context.Context, sequenceID string) (eventRecords []EventRecord, err error)
+	GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error)
+	GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error)
 }
 
 // NewRepository returns a new repository
@@ -128,6 +130,9 @@ func (repo *repository) Save(ctx context.Context, events ...Event) error {
 func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (StoreTransaction, error) {
 	records := []Record{}
 	for _, event := range events {
+		event.SetSequenceID(NewULID())
+		event.SetTimestamp(time.Now().UnixNano())
+
 		data, err := repo.serializer.Marshal(event)
 		if err != nil {
 			return nil, err
@@ -135,8 +140,8 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 
 		records = append(records, Record{
 			AggregateID: event.GetAggregateID(),
-			SequenceID:  NewULID(),
-			Timestamp:   time.Now().UnixNano(),
+			SequenceID:  event.GetSequenceID(),
+			Timestamp:   event.GetTimestamp(),
 			Type:        reflect.TypeOf(event).Name(),
 			Data:        data,
 			UserID:      event.GetUserID(),
@@ -148,7 +153,7 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 
 // Load rehydrates the repo
 func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggregate) (_ bool, err error) {
-	history, err := repo.store.LoadAggregate(ctx, aggregateID)
+	history, err := repo.store.LoadByAggregate(ctx, aggregateID)
 	if err != nil {
 		return
 	}
@@ -174,18 +179,28 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 	return
 }
 
-func (repo repository) GetRecords(ctx context.Context, sequenceID string) (eventRecords []EventRecord, err error) {
+func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error) {
 	var records []Record
-	records, err = repo.store.LoadNewerThan(ctx, sequenceID)
+	records, err = repo.store.LoadBySequenceID(ctx, sequenceID)
 	for _, record := range(records) {
 		var event Event
 		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
 			return
 		}
-		eventRecords = append(eventRecords, EventRecord{
-			Record: record,
-			Event: event,
-		})
+		events = append(events, event)
+	}
+	return
+}
+
+func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error) {
+	var records []Record
+	records, err = repo.store.LoadByTimestamp(ctx, timestamp)
+	for _, record := range(records) {
+		var event Event
+		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
+			return
+		}
+		events = append(events, event)
 	}
 	return
 }

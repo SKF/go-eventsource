@@ -15,7 +15,9 @@ type store struct {
 
 const (
 	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
-	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 1000000"
+	loadAggregateSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 100000"
+	loadBySequenceIDSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 ORDER BY sequence_id ASC LIMIT 100000"
+	loadByTimestampSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE timestamp > $1 ORDER BY timestamp ASC LIMIT 100000"
 )
 
 // New ...
@@ -26,14 +28,16 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-// Load ...
-func (store *store) Load(ctx context.Context, id string) (records []eventsource.Record, err error) {
-	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(loadSQL, store.tablename))
+func (store *store) createRecords(ctx context.Context, query string, args ...interface{}) (records []eventsource.Record, err error) {
+	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(query, store.tablename))
 	if err != nil {
 		return
 	}
 	defer stmt.Close()
-	rows, err := stmt.QueryContext(ctx, id)
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return
+	}
 	for rows.Next() {
 		var record eventsource.Record
 		if err = rows.Scan(
@@ -48,4 +52,17 @@ func (store *store) Load(ctx context.Context, id string) (records []eventsource.
 		return
 	}
 	return
+}
+
+// Load ...
+func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
+	return store.createRecords(ctx, loadAggregateSQL, aggregateID)
+}
+
+func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
+	return store.createRecords(ctx, loadBySequenceIDSQL, sequenceID)
+}
+
+func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64) (records []eventsource.Record, err error) {
+	return store.createRecords(ctx, loadByTimestampSQL, timestamp)
 }

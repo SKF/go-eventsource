@@ -2,6 +2,7 @@ package dynamodbstore
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -27,11 +28,11 @@ func New(sess *session.Session, tableName string) eventsource.Store {
 	}
 }
 
-//Load ...
-func (store *store) Load(ctx context.Context, id string) (records []eventsource.Record, err error) {
+//LoadByAggregate ...
+func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
 	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{
-		":id": {S: &id},
+		":id": {S: &aggregateID},
 	}
 
 	input := dynamodb.QueryInput{
@@ -58,5 +59,19 @@ func (store *store) Load(ctx context.Context, id string) (records []eventsource.
 		return
 	}
 
+	return
+}
+
+// LoadBySequenceID ...
+func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
+	err = errors.New("Operation not supported on DynamoDB")
+	log.Error(err.Error())
+	return
+}
+
+// LoadByTimestamp
+func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64) (records []eventsource.Record, err error) {
+	err = errors.New("Operation not supported on DynamoDB")
+	log.Error(err.Error())
 	return
 }

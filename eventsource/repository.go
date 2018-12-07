@@ -14,7 +14,7 @@ import (
 
 var (
 	// ErrDeleted is returned by Aggregate.On() method to signal that the object has been deleted
-	ErrDeleted   = errors.New("Not found (was deleted)")
+	ErrDeleted = errors.New("Not found (was deleted)")
 	// ErrNoHistory is returned by Repository.Load() when no history exist for the given aggregate ID
 	ErrNoHistory = errors.New("No history found")
 )
@@ -62,9 +62,14 @@ type Repository interface {
 	// "fast forwarded" to the current state.
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 
-	// Get records and unmarshalled events for all aggregates. Only include records
-	// newer than the given sequence ID (see https://github.com/oklog/ulid)
+	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
+	// There is a limit to how many events can be returned, so this method
+	// should be called repeatedly until no more events are returned.
 	GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error)
+
+	// Get all events newer than the given timestamp
+	// There is a limit to how many events can be returned, so this method
+	// should be called repeatedly until no more events are returned.
 	GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error)
 }
 
@@ -91,7 +96,7 @@ type Record struct {
 // both the raw Record and the unmarshalled Event
 type EventRecord struct {
 	Record Record
-	Event Event
+	Event  Event
 }
 
 type repository struct {
@@ -182,7 +187,7 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error) {
 	var records []Record
 	records, err = repo.store.LoadBySequenceID(ctx, sequenceID)
-	for _, record := range(records) {
+	for _, record := range records {
 		var event Event
 		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
 			return
@@ -195,7 +200,7 @@ func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID str
 func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error) {
 	var records []Record
 	records, err = repo.store.LoadByTimestamp(ctx, timestamp)
-	for _, record := range(records) {
+	for _, record := range records {
 		var event Event
 		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
 			return

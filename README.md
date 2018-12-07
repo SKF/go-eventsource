@@ -15,9 +15,26 @@ It has an interface for saving events and loading an aggregate.
 
 ```
 type Repository interface {
+	// Save one or more events to the repository
 	Save(ctx context.Context, events ...Event) error
+
+	// Save one or more events to the repository, within a transaction
 	SaveTransaction(ctx context.Context, events ...Event) (StoreTransaction, error)
+
+	// Load events from repository for the given aggregate ID. For each event e,
+	// call aggr.On(e) to update the state of aggr. When done, aggr has been
+	// "fast forwarded" to the current state.
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
+
+	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
+	// There is a limit to how many events can be returned, so this method
+	// should be called repeatedly until no more events are returned.
+	GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error)
+
+	// Get all events newer than the given timestamp
+	// There is a limit to how many events can be returned, so this method
+	// should be called repeatedly until no more events are returned.
+	GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error)
 }
 ```
 

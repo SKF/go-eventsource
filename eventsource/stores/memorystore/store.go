@@ -32,6 +32,9 @@ func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string) (record
 			if row.SequenceID > sequenceID {
 				records = append(records, row)
 			}
+			if len(records) >= 1000 {
+				break
+			}
 		}
 	}
 	sort.Slice(records, func(i, j int) bool {
@@ -46,6 +49,9 @@ func (mem *store) LoadBySequenceIDAndType(_ context.Context, sequenceID string, 
 			if row.SequenceID > sequenceID && row.Type == eventType {
 				records = append(records, row)
 			}
+			if len(records) >= 1000 {
+				break
+			}
 		}
 	}
 	sort.Slice(records, func(i, j int) bool {
@@ -59,6 +65,9 @@ func (mem *store) LoadByTimestamp(_ context.Context, timestamp int64) (records [
 		for _, row := range aggregate {
 			if row.Timestamp > timestamp {
 				records = append(records, row)
+			}
+			if len(records) >= 1000 {
+				break
 			}
 		}
 	}

@@ -16,9 +16,9 @@ type store struct {
 const (
 	saveSQL                    = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
 	loadAggregateSQL           = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT 100000"
-	loadBySequenceIDSQL        = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 ORDER BY sequence_id ASC LIMIT 100000"
-	loadBySequenceIDAndTypeSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 AND type = $2 ORDER BY sequence_id ASC LIMIT 100000"
-	loadByTimestampSQL         = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE timestamp > $1 ORDER BY timestamp ASC LIMIT 100000"
+	loadBySequenceIDSQL        = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 ORDER BY sequence_id ASC LIMIT 1000"
+	loadBySequenceIDAndTypeSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 AND type = $2 ORDER BY sequence_id ASC LIMIT 1000"
+	loadByTimestampSQL         = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE timestamp > $1 ORDER BY timestamp ASC LIMIT 1000"
 )
 
 // New ...

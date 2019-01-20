@@ -40,6 +40,20 @@ func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string) (record
 	return
 }
 
+func (mem *store) LoadBySequenceIDAndType(_ context.Context, sequenceID string, eventType string) (records []eventsource.Record, err error) {
+	for _, aggregate := range mem.Data {
+		for _, row := range aggregate {
+			if row.SequenceID > sequenceID && row.Type == eventType {
+				records = append(records, row)
+			}
+		}
+	}
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].SequenceID < records[j].SequenceID
+	})
+	return
+}
+
 func (mem *store) LoadByTimestamp(_ context.Context, timestamp int64) (records []eventsource.Record, err error) {
 	for _, aggregate := range mem.Data {
 		for _, row := range aggregate {

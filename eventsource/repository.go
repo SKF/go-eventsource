@@ -25,6 +25,7 @@ type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
 	LoadByAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
 	LoadBySequenceID(ctx context.Context, sequenceID string) (record []Record, err error)
+	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string) (records []Record, err error)
 	LoadByTimestamp(ctx context.Context, timestamp int64) (record []Record, err error)
 }
 
@@ -66,6 +67,10 @@ type Repository interface {
 	// There is a limit to how many events can be returned, so this method
 	// should be called repeatedly until no more events are returned.
 	GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error)
+
+	// Same as GetEventsBySequenceID, but only returns events of the same type
+	// as the one provided in the eventType parameter.
+	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event) (events []Event, err error)
 
 	// Get all events newer than the given timestamp
 	// There is a limit to how many events can be returned, so this method
@@ -187,6 +192,19 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error) {
 	var records []Record
 	records, err = repo.store.LoadBySequenceID(ctx, sequenceID)
+	for _, record := range records {
+		var event Event
+		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
+			return
+		}
+		events = append(events, event)
+	}
+	return
+}
+
+func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event) (events []Event, err error) {
+	var records []Record
+	records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, reflect.TypeOf(eventType).Name())
 	for _, record := range records {
 		var event Event
 		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {

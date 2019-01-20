@@ -13,11 +13,11 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	ctx := context.Background()
 	store := New()
 	tx, err := store.NewTransaction(ctx, []eventsource.Record{
-		{AggregateID: "A", SequenceID: "1"},
-		{AggregateID: "A", SequenceID: "2"},
-		{AggregateID: "B", SequenceID: "1"},
-		{AggregateID: "C", SequenceID: "4"},
-		{AggregateID: "D", SequenceID: "3"},
+		{AggregateID: "A", SequenceID: "1", Type: "TestEventA"},
+		{AggregateID: "A", SequenceID: "2", Type: "TestEventB"},
+		{AggregateID: "B", SequenceID: "1", Type: "TestEventB"},
+		{AggregateID: "C", SequenceID: "4", Type: "TestEventA"},
+		{AggregateID: "D", SequenceID: "3", Type: "TestEventA"},
 	}...)
 	require.NoError(t, err)
 
@@ -30,6 +30,12 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	assert.Equal(t, records[0].SequenceID, "2")
 	assert.Equal(t, records[1].SequenceID, "3")
 	assert.Equal(t, records[2].SequenceID, "4")
+
+	records, err = store.LoadBySequenceIDAndType(ctx, "1", "TestEventA")
+	require.NoError(t, err)
+	assert.Len(t, records, 2)
+	assert.Equal(t, records[0].SequenceID, "3")
+	assert.Equal(t, records[1].SequenceID, "4")
 
 	records, err = store.LoadByAggregate(ctx, "A")
 	require.NoError(t, err)

@@ -69,6 +69,13 @@ func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string) (re
 	return
 }
 
+// LoadBySequenceIDAndType ...
+func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string) (records []eventsource.Record, err error) {
+	err = errors.New("Operation not supported on DynamoDB")
+	log.Error(err.Error())
+	return
+}
+
 // LoadByTimestamp
 func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64) (records []eventsource.Record, err error) {
 	err = errors.New("Operation not supported on DynamoDB")

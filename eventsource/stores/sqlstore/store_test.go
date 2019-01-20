@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/SKF/go-eventsource/eventsource/serializers/json"
 	"github.com/SKF/go-utility/uuid"
+	"github.com/stretchr/testify/assert"
 
 	_ "github.com/lib/pq"
 	"github.com/oklog/ulid"
@@ -31,7 +31,8 @@ func TestLoadBySequenceID(t *testing.T) {
 	}
 	defer db.Close()
 
-	events, err := createTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
+	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
+	events, err := createTestEvents(db, 10, eventTypes, [][]byte{[]byte("TestData")})
 	if err != nil {
 		t.Errorf("unable to create events err: %v", err)
 	}
@@ -55,6 +56,24 @@ func TestLoadBySequenceID(t *testing.T) {
 	}
 	if len(records) != 1 {
 		t.Errorf("Expected one record from store, got %d", len(records))
+	}
+
+	records, err = store.LoadBySequenceIDAndType(context.Background(), events[0].SequenceID, "EventTypeA")
+
+	if err != nil {
+		t.Errorf("LoadBySequenceIDAndType failed with: %s", err)
+	}
+	if len(records) != 2 {
+		t.Errorf("Expected two records from store, got %d", len(records))
+	}
+
+	records, err = store.LoadBySequenceIDAndType(context.Background(), "", "EventTypeA")
+
+	if err != nil {
+		t.Errorf("LoadBySequenceIDAndType failed with: %s", err)
+	}
+	if len(records) != 3 {
+		t.Errorf("Expected three records from store, got %d", len(records))
 	}
 
 	err = deleteEvents(db, events)
@@ -144,7 +163,7 @@ func Test_SQLStoreE2E(t *testing.T) {
 	}
 	defer db.Close()
 
-	tmpTableName := "hejsan"//strings.Replace(uuid.New().String(), "-", "", -1)
+	tmpTableName := "hejsan" //strings.Replace(uuid.New().String(), "-", "", -1)
 	_, err = db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tmpTableName))
 	assert.Nil(t, err, "Could not drop old event table")
 	_, err = db.Exec(fmt.Sprintf(`-- Table Definition ----------------------------------------------
@@ -197,5 +216,5 @@ CREATE TABLE %s (
 	assert.Nil(t, err, "Could not get events")
 	assert.Equal(t, 1, len(events))
 
-	db.Exec("DROP TABLE $1", tmpTableName)
+	db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tmpTableName))
 }

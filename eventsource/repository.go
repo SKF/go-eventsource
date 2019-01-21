@@ -189,41 +189,37 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 	return
 }
 
-func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error) {
-	var records []Record
-	records, err = repo.store.LoadBySequenceID(ctx, sequenceID)
+func unmarshalRecords(serializer Serializer, records []Record) (events []Event, err error) {
 	for _, record := range records {
 		var event Event
-		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
+		if event, err = serializer.Unmarshal(record.Data, record.Type); err != nil {
 			return
 		}
 		events = append(events, event)
 	}
 	return
+}
+
+func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error) {
+	var records []Record
+	if records, err = repo.store.LoadBySequenceID(ctx, sequenceID); err != nil {
+		return
+	}
+	return unmarshalRecords(repo.serializer, records)
 }
 
 func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event) (events []Event, err error) {
 	var records []Record
-	records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, reflect.TypeOf(eventType).Name())
-	for _, record := range records {
-		var event Event
-		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
-			return
-		}
-		events = append(events, event)
+	if records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, reflect.TypeOf(eventType).Name()); err != nil {
+		return
 	}
-	return
+	return unmarshalRecords(repo.serializer, records)
 }
 
 func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error) {
 	var records []Record
-	records, err = repo.store.LoadByTimestamp(ctx, timestamp)
-	for _, record := range records {
-		var event Event
-		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
-			return
-		}
-		events = append(events, event)
+	if records, err = repo.store.LoadByTimestamp(ctx, timestamp); err != nil {
+		return
 	}
-	return
+	return unmarshalRecords(repo.serializer, records)
 }

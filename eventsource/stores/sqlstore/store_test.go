@@ -39,24 +39,26 @@ func TestLoadBySequenceID(t *testing.T) {
 
 	var records []eventsource.Record
 
+	ctx := context.TODO()
+
 	store := New(db, tableName)
-	records, err = store.LoadBySequenceID(context.Background(), events[0].SequenceID, 0)
+	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID, 0)
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 9, len(records))
 
-	records, err = store.LoadBySequenceID(context.Background(), events[len(events)-2].SequenceID, 0)
+	records, err = store.LoadBySequenceID(ctx, events[len(events)-2].SequenceID, 0)
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 1, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(context.Background(), events[0].SequenceID, "EventTypeA", 0)
+	records, err = store.LoadBySequenceIDAndType(ctx, events[0].SequenceID, "EventTypeA", 0)
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 2, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(context.Background(), "", "EventTypeA", 0)
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 0)
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 3, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(context.Background(), "", "EventTypeA", 1)
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 1)
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 1, len(records))
 }
@@ -125,7 +127,7 @@ func Test_SQLStoreE2E(t *testing.T) {
 	var aggregateID = uuid.New().String()
 	var userIDA, userIDB = uuid.New().String(), uuid.New().String()
 
-	ctx := context.Background()
+	ctx := context.TODO()
 	repo := eventsource.NewRepository(New(db, tableName), json.NewSerializer(TestEventA{}, TestEventB{}))
 	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestString: "a"})
 	assert.NoError(t, err, "Could not save event to DB")

@@ -33,18 +33,19 @@ func sortRecords(records []eventsource.Record) {
 }
 
 func (mem *store) loadRecords(includeRecord func(eventsource.Record) bool, limit int) (records []eventsource.Record, err error) {
+	var recordSlice []eventsource.Record
 	for _, aggregate := range mem.Data {
-		for _, record := range aggregate {
-			if includeRecord(record) {
-				records = append(records, record)
-			}
-			if limit != 0 && len(records) >= limit {
-				sortRecords(records)
-				return
-			}
+		recordSlice = append(recordSlice, aggregate...)
+	}
+	sortRecords(recordSlice)
+	for _, record := range recordSlice {
+		if includeRecord(record) {
+			records = append(records, record)
+		}
+		if limit != 0 && len(records) >= limit {
+			return
 		}
 	}
-	sortRecords(records)
 	return
 }
 

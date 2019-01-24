@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"time"
 
@@ -11,11 +12,35 @@ import (
 	"github.com/SKF/go-utility/uuid"
 )
 
+func randomTableName() string {
+	numChars := 30
+	rand.Seed(time.Now().UnixNano())
+	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	tableName := make([]rune, numChars)
+	for i := 0; i < numChars; i++ {
+		tableName[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(tableName)
+}
+
+func createTable(db *sql.DB) (tableName string, err error) {
+	tableName = randomTableName()
+	_, err = db.Exec(fmt.Sprintf(`CREATE TABLE %s (
+    sequence_id character(26) PRIMARY KEY,
+    aggregate_id uuid,
+    user_id uuid,
+    created_at bigint NOT NULL,
+    type character varying(255),
+    data bytea
+)`, tableName))
+	return
+}
+
 // createTestEvents - create some random test events in sequence
-func createTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
+func createTestEvents(db *sql.DB, tableName string, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
 	result = []eventsource.Record{}
 
-	store := New(db, "events")
+	store := New(db, tableName)
 
 	for i := 0; i < numberOfEvents; i++ {
 		aggID := uuid.New()
@@ -69,12 +94,7 @@ func createTestEvents(db *sql.DB, numberOfEvents int, eventTypeList []string, ev
 }
 
 // deleteEvents - delete events (using the SequenceID)
-func deleteEvents(db *sql.DB, events []eventsource.Record) error {
-	for _, e := range events {
-		_, err := db.Exec("DELETE from events WHERE sequence_id = $1", e.SequenceID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func cleanup(db *sql.DB, tableName string) error {
+	_, err := db.Exec(fmt.Sprintf("DROP TABLE %s", tableName))
+	return err
 }

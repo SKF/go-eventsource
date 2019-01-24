@@ -17,18 +17,10 @@ type serializer struct {
 func NewSerializer(events ...eventsource.Event) eventsource.Serializer {
 	eventTypes := map[string]reflect.Type{}
 	for _, event := range events {
-		eventType := getTypeOfValue(event)
+		eventType := eventsource.GetType(event)
 		eventTypes[eventType.Name()] = eventType
 	}
 	return &serializer{eventTypes: eventTypes}
-}
-
-func getTypeOfValue(input interface{}) reflect.Type {
-	value := reflect.TypeOf(input)
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
-	}
-	return value
 }
 
 // Unmarshal implements the Marshaler encoding interface

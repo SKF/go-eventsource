@@ -1,6 +1,7 @@
 package eventsource
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,4 +37,23 @@ func Test_Setters(t *testing.T) {
 	testEvent.SetTimestamp(timestamp2)
 	assert.Equal(t, ulid2, testEvent.GetSequenceID())
 	assert.Equal(t, timestamp2, testEvent.GetTimestamp())
+}
+
+func Test_GetTypeName(t *testing.T) {
+	type TestEvent struct {
+		*BaseEvent
+	}
+	var tests = []struct {
+		event Event
+		name  string
+	}{
+		{TestEvent{}, "TestEvent"},
+		{&TestEvent{}, "TestEvent"},
+	}
+	for _, test := range tests {
+		typeName := GetTypeName(test.event)
+		if strings.Compare(typeName, test.name) != 0 {
+			t.Errorf("Expected string representation %v to equal %s", typeName, test.name)
+		}
+	}
 }

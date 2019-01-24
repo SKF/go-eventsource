@@ -26,53 +26,42 @@ func (mem *store) LoadByAggregate(_ context.Context, aggregateID string) (record
 	return records, nil
 }
 
-func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string) (records []eventsource.Record, err error) {
-	for _, aggregate := range mem.Data {
-		for _, row := range aggregate {
-			if row.SequenceID > sequenceID {
-				records = append(records, row)
-			}
-			if len(records) >= 1000 {
-				break
-			}
-		}
-	}
+func sortRecords(records []eventsource.Record) {
 	sort.Slice(records, func(i, j int) bool {
 		return records[i].SequenceID < records[j].SequenceID
 	})
-	return
 }
 
-func (mem *store) LoadBySequenceIDAndType(_ context.Context, sequenceID string, eventType string) (records []eventsource.Record, err error) {
+func (mem *store) loadRecords(includeRecord func(eventsource.Record) bool, limit int) (records []eventsource.Record, err error) {
 	for _, aggregate := range mem.Data {
-		for _, row := range aggregate {
-			if row.SequenceID > sequenceID && row.Type == eventType {
-				records = append(records, row)
+		for _, record := range aggregate {
+			if includeRecord(record) {
+				records = append(records, record)
 			}
-			if len(records) >= 1000 {
-				break
+			if limit != 0 && len(records) >= limit {
+				sortRecords(records)
+				return
 			}
 		}
 	}
-	sort.Slice(records, func(i, j int) bool {
-		return records[i].SequenceID < records[j].SequenceID
-	})
+	sortRecords(records)
 	return
 }
 
-func (mem *store) LoadByTimestamp(_ context.Context, timestamp int64) (records []eventsource.Record, err error) {
-	for _, aggregate := range mem.Data {
-		for _, row := range aggregate {
-			if row.Timestamp > timestamp {
-				records = append(records, row)
-			}
-			if len(records) >= 1000 {
-				break
-			}
-		}
-	}
-	sort.Slice(records, func(i, j int) bool {
-		return records[i].Timestamp < records[j].Timestamp
-	})
-	return
+func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string, limit int) (records []eventsource.Record, err error) {
+	return mem.loadRecords(func(record eventsource.Record) (include bool) {
+		return record.SequenceID > sequenceID
+	}, limit)
+}
+
+func (mem *store) LoadBySequenceIDAndType(_ context.Context, sequenceID string, eventType string, limit int) (records []eventsource.Record, err error) {
+	return mem.loadRecords(func(record eventsource.Record) (include bool) {
+		return record.SequenceID > sequenceID && record.Type == eventType
+	}, limit)
+}
+
+func (mem *store) LoadByTimestamp(_ context.Context, timestamp int64, limit int) (records []eventsource.Record, err error) {
+	return mem.loadRecords(func(record eventsource.Record) (include bool) {
+		return record.Timestamp > timestamp
+	}, limit)
 }

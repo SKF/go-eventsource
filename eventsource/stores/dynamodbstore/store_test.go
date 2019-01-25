@@ -18,7 +18,7 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	sess, err := session.NewSession()
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := context.TODO()
 	store := New(sess, "Events")
 	tx, err := store.NewTransaction(ctx, []eventsource.Record{
 		{AggregateID: "A", Timestamp: 1},

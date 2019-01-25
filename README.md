@@ -27,14 +27,16 @@ type Repository interface {
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 
 	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
-	// There is a limit to how many events can be returned, so this method
-	// should be called repeatedly until no more events are returned.
-	GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error)
+	// Return at most limit records. If limit is 0, don't limit the number of records returned.
+	GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) (events []Event, err error)
+
+	// Same as GetEventsBySequenceID, but only returns events of the same type
+	// as the one provided in the eventType parameter.
+	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, limit int) (events []Event, err error)
 
 	// Get all events newer than the given timestamp
-	// There is a limit to how many events can be returned, so this method
-	// should be called repeatedly until no more events are returned.
-	GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error)
+	// Return at most limit records. If limit is 0, don't limit the number of records returned.
+	GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) (events []Event, err error)
 }
 ```
 
@@ -55,7 +57,10 @@ If you want to add your own store or serializer, the package has these defined i
 ```
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
-	Load(ctx context.Context, id string) (record []Record, err error)
+	LoadByAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
+	LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (record []Record, err error)
+	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []Record, err error)
+	LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (record []Record, err error)
 }
 
 type StoreTransaction interface {

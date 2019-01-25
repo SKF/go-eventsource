@@ -10,7 +10,7 @@ import (
 )
 
 func Test_SaveLoadRollback_AllInOne(t *testing.T) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	store := New()
 	tx, err := store.NewTransaction(ctx, []eventsource.Record{
 		{AggregateID: "A", SequenceID: "1", Type: "TestEventA"},

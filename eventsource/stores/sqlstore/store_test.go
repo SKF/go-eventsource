@@ -3,17 +3,17 @@ package sqlstore
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"math/rand"
 	"os"
-	//"strings"
+
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/SKF/go-eventsource/eventsource/serializers/json"
 	"github.com/SKF/go-utility/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	_ "github.com/lib/pq"
 	"github.com/oklog/ulid"
@@ -26,63 +26,41 @@ func TestLoadBySequenceID(t *testing.T) {
 	}
 
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
-	if err != nil {
-		t.Errorf("Could not connect to db: %s", err)
-	}
+	require.NoError(t, err, "Could not connect to db")
 	defer db.Close()
 
-	events, err := createTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
-	if err != nil {
-		t.Errorf("unable to create events err: %v", err)
-	}
+	tableName, err := createTable(db)
+	require.NoError(t, err, "Could not create table")
+
+	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
+	events, err := createTestEvents(db, tableName, 10, eventTypes, [][]byte{[]byte("TestData")})
+	require.NoError(t, err, "Failed to create events")
+	defer cleanup(db, tableName)
 
 	var records []eventsource.Record
 
-	store := New(db, "events")
-	records, err = store.LoadBySequenceID(context.Background(), events[0].SequenceID)
+	ctx := context.TODO()
 
-	if err != nil {
-		t.Errorf("LoadBySequenceID failed with: %s", err)
-	}
-	if len(records) != 9 {
-		t.Errorf("Expected nine records from store, got %d", len(records))
-	}
+	store := New(db, tableName)
+	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID, 0)
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 9, len(records))
 
-	records, err = store.LoadBySequenceID(context.Background(), events[len(events)-2].SequenceID)
+	records, err = store.LoadBySequenceID(ctx, events[len(events)-2].SequenceID, 0)
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 1, len(records))
 
-	if err != nil {
-		t.Errorf("LoadBySequenceID failed with: %s", err)
-	}
-	if len(records) != 1 {
-		t.Errorf("Expected one record from store, got %d", len(records))
-	}
+	records, err = store.LoadBySequenceIDAndType(ctx, events[0].SequenceID, "EventTypeA", 0)
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 2, len(records))
 
-	err = deleteEvents(db, events)
-	if err != nil {
-		t.Errorf("Unable to delete events: %v got err:%v", events, err)
-	}
-}
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 0)
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 3, len(records))
 
-func TestSaveLoad(t *testing.T) {
-	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
-		t.Log("Skipping postgres e2e test")
-		t.Skip()
-	}
-
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
-	if err != nil {
-		t.Errorf("Could not connect to db: %s", err)
-	}
-	defer db.Close()
-
-	events, err := createTestEvents(db, 10, []string{"Testing1", "Testing2"}, [][]byte{[]byte("TestData")})
-	if err != nil {
-		t.Errorf("unable to create events err: %v", err)
-	}
-	err = deleteEvents(db, events)
-	if err != nil {
-		t.Errorf("Unable to delete events: %v got err:%v", events, err)
-	}
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 1)
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 1, len(records))
 }
 
 func TestULID(t *testing.T) {
@@ -139,63 +117,48 @@ func Test_SQLStoreE2E(t *testing.T) {
 	}
 
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
-	if err != nil {
-		t.Errorf("Could not connect to db: %s", err)
-	}
+	require.NoError(t, err, "Could not connect to db")
 	defer db.Close()
 
-	tmpTableName := "hejsan"//strings.Replace(uuid.New().String(), "-", "", -1)
-	_, err = db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tmpTableName))
-	assert.Nil(t, err, "Could not drop old event table")
-	_, err = db.Exec(fmt.Sprintf(`-- Table Definition ----------------------------------------------
-CREATE TABLE %s (
-    sequence_id character(26) PRIMARY KEY,
-    aggregate_id uuid,
-    user_id uuid,
-    created_at bigint NOT NULL,
-    type character varying(255),
-    data bytea
-)`, tmpTableName))
-	assert.Nil(t, err, "Could not create new event table")
+	tableName, err := createTable(db)
+	require.NoError(t, err, "Could not create table")
+	defer cleanup(db, tableName)
 
 	var aggregateID = uuid.New().String()
 	var userIDA, userIDB = uuid.New().String(), uuid.New().String()
 
-	ctx := context.Background()
-	repo := eventsource.NewRepository(New(db, tmpTableName), json.NewSerializer(TestEventA{}, TestEventB{}))
+	ctx := context.TODO()
+	repo := eventsource.NewRepository(New(db, tableName), json.NewSerializer(TestEventA{}, TestEventB{}))
 	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestString: "a"})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestString: "b"})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestString: "c"})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestString: "d"})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestInt: 1})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestInt: 2})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestInt: 3})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestInt: 4})
-	assert.Nil(t, err, "Could not save event to DB")
+	assert.NoError(t, err, "Could not save event to DB")
 
 	var testObject TestObject
-	if deleted, err := repo.Load(ctx, aggregateID, &testObject); err != nil {
-		t.Errorf("Could not connect to db: %s", err)
-	} else if deleted {
-		t.Errorf("Could not load aggregate id %s: %s", aggregateID, err)
-	}
+	deleted, err := repo.Load(ctx, aggregateID, &testObject)
+	assert.NoError(t, err, "Could not load aggregate")
+	assert.False(t, deleted)
 	assert.Equal(t, aggregateID, testObject.AggID)
 	assert.Equal(t, "abcd", testObject.FieldA)
 	assert.Equal(t, 10, testObject.FieldB)
 
-	events, err := repo.GetEventsBySequenceID(ctx, "")
-	assert.Nil(t, err, "Could not get events")
+	events, err := repo.GetEventsBySequenceID(ctx, "", 0)
+	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 8, len(events))
-	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID())
-	assert.Nil(t, err, "Could not get events")
-	assert.Equal(t, 1, len(events))
 
-	db.Exec("DROP TABLE $1", tmpTableName)
+	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID(), 0)
+	assert.NoError(t, err, "Could not get events")
+	assert.Equal(t, 1, len(events))
 }

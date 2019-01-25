@@ -14,23 +14,23 @@ import (
 func createMockHistory() []Record {
 	return []Record{
 		{
-			Data: []byte{byte(2)},
-			Type: "BaseEvent",
+			Data:       []byte{byte(2)},
+			Type:       "BaseEvent",
 			SequenceID: "1",
 		},
 		{
-			Data: []byte{byte(0)},
-			Type: "BaseEvent",
+			Data:       []byte{byte(0)},
+			Type:       "BaseEvent",
 			SequenceID: "2",
 		},
 		{
-			Data: []byte{byte(1)},
-			Type: "BaseEvent",
+			Data:       []byte{byte(1)},
+			Type:       "BaseEvent",
 			SequenceID: "3",
 		},
 		{
-			Data: []byte{byte(3)},
-			Type: "OtherEvent",
+			Data:       []byte{byte(3)},
+			Type:       "OtherEvent",
 			SequenceID: "4",
 		},
 	}
@@ -45,7 +45,16 @@ func filterHistoryBySeqID(history []Record, sequenceID string) (filtered []Recor
 	return
 }
 
-type OtherEvent struct{
+func filterHistoryBySeqIDAndType(history []Record, sequenceID string, eventType string) (filtered []Record) {
+	for _, record := range history {
+		if record.SequenceID > sequenceID && record.Type == eventType {
+			filtered = append(filtered, record)
+		}
+	}
+	return
+}
+
+type OtherEvent struct {
 	*BaseEvent
 	OtherEventField int
 }
@@ -78,12 +87,12 @@ func Test_RepoGetRecords(t *testing.T) {
 	otherEvent := &OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
 
 	ctx := context.Background()
-	storeMock.On("LoadBySequenceID", ctx, "2").Return(filterHistoryBySeqID(history, "2"), nil)
+	storeMock.On("LoadBySequenceID", ctx, "2", 0).Return(filterHistoryBySeqID(history, "2"), nil)
 	serializerMock.On("Unmarshal", []byte{byte(1)}, "BaseEvent").Return(baseEvent, nil)
 	serializerMock.On("Unmarshal", []byte{byte(3)}, "OtherEvent").Return(otherEvent, nil)
 
 	repo := NewRepository(storeMock, serializerMock)
-	records, err := repo.GetEventsBySequenceID(ctx, "2")
+	records, err := repo.GetEventsBySequenceID(ctx, "2", 0)
 
 	aggregatorMock.Mock.AssertExpectations(t)
 	serializerMock.AssertExpectations(t)
@@ -92,6 +101,27 @@ func Test_RepoGetRecords(t *testing.T) {
 	assert.Equal(t, len(records), 2)
 	assert.Equal(t, records[0].(*BaseEvent), baseEvent, true)
 	assert.Equal(t, records[1].(*OtherEvent), otherEvent, true)
+}
+
+func Test_RepoGetRecordsByType(t *testing.T) {
+	storeMock, _, serializerMock, aggregatorMock := setupMocks()
+
+	history, baseEvent, _ := createMockDataForLoadAggregate()
+	otherEvent := &OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
+
+	ctx := context.Background()
+	storeMock.On("LoadBySequenceIDAndType", ctx, "2", "OtherEvent", 0).Return(filterHistoryBySeqIDAndType(history, "2", "OtherEvent"), nil)
+	serializerMock.On("Unmarshal", []byte{byte(3)}, "OtherEvent").Return(otherEvent, nil)
+
+	repo := NewRepository(storeMock, serializerMock)
+	records, err := repo.GetEventsBySequenceIDAndType(ctx, "2", OtherEvent{}, 0)
+
+	aggregatorMock.Mock.AssertExpectations(t)
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
+	assert.Nil(t, err)
+	assert.Equal(t, len(records), 1)
+	assert.Equal(t, records[0].(*OtherEvent), otherEvent, true)
 }
 
 func Test_RepoLoadSuccess(t *testing.T) {
@@ -308,4 +338,3 @@ func Test_RepoMock_OK(t *testing.T) {
 	assert.EqualError(t, err, expectedError.Error())
 	assert.False(t, deleted)
 }
-

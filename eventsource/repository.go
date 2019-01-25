@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"reflect"
 	"sync"
 	"time"
 
@@ -24,8 +23,9 @@ var (
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
 	LoadByAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
-	LoadBySequenceID(ctx context.Context, sequenceID string) (record []Record, err error)
-	LoadByTimestamp(ctx context.Context, timestamp int64) (record []Record, err error)
+	LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (record []Record, err error)
+	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []Record, err error)
+	LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (record []Record, err error)
 }
 
 // StoreTransaction encapsulates a write operation to a Store, allowing the caller
@@ -63,14 +63,16 @@ type Repository interface {
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 
 	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
-	// There is a limit to how many events can be returned, so this method
-	// should be called repeatedly until no more events are returned.
-	GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error)
+	// Return at most limit records. If limit is 0, don't limit the number of records returned.
+	GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) (events []Event, err error)
+
+	// Same as GetEventsBySequenceID, but only returns events of the same type
+	// as the one provided in the eventType parameter.
+	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, limit int) (events []Event, err error)
 
 	// Get all events newer than the given timestamp
-	// There is a limit to how many events can be returned, so this method
-	// should be called repeatedly until no more events are returned.
-	GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error)
+	// Return at most limit records. If limit is 0, don't limit the number of records returned.
+	GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) (events []Event, err error)
 }
 
 // NewRepository returns a new repository
@@ -147,7 +149,7 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 			AggregateID: event.GetAggregateID(),
 			SequenceID:  event.GetSequenceID(),
 			Timestamp:   event.GetTimestamp(),
-			Type:        reflect.TypeOf(event).Name(),
+			Type:        GetTypeName(event),
 			Data:        data,
 			UserID:      event.GetUserID(),
 		})
@@ -184,12 +186,10 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 	return
 }
 
-func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string) (events []Event, err error) {
-	var records []Record
-	records, err = repo.store.LoadBySequenceID(ctx, sequenceID)
+func unmarshalRecords(serializer Serializer, records []Record) (events []Event, err error) {
 	for _, record := range records {
 		var event Event
-		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
+		if event, err = serializer.Unmarshal(record.Data, record.Type); err != nil {
 			return
 		}
 		events = append(events, event)
@@ -197,15 +197,26 @@ func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID str
 	return
 }
 
-func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64) (events []Event, err error) {
+func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) (events []Event, err error) {
 	var records []Record
-	records, err = repo.store.LoadByTimestamp(ctx, timestamp)
-	for _, record := range records {
-		var event Event
-		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
-			return
-		}
-		events = append(events, event)
+	if records, err = repo.store.LoadBySequenceID(ctx, sequenceID, limit); err != nil {
+		return
 	}
-	return
+	return unmarshalRecords(repo.serializer, records)
+}
+
+func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, limit int) (events []Event, err error) {
+	var records []Record
+	if records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, GetTypeName(eventType), limit); err != nil {
+		return
+	}
+	return unmarshalRecords(repo.serializer, records)
+}
+
+func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) (events []Event, err error) {
+	var records []Record
+	if records, err = repo.store.LoadByTimestamp(ctx, timestamp, limit); err != nil {
+		return
+	}
+	return unmarshalRecords(repo.serializer, records)
 }

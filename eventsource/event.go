@@ -1,5 +1,7 @@
 package eventsource
 
+import "reflect"
+
 // Event ...
 type Event interface {
 	GetAggregateID() string
@@ -16,6 +18,20 @@ type BaseEvent struct {
 	UserID      string `json:"userId"`
 	SequenceID  string `json:"sequenceId"`
 	Timestamp   int64  `json:"timestamp"`
+}
+
+// GetType the type of the given input value, or if input is a pointer, return the type of the pointed to object
+func GetType(e Event) reflect.Type {
+	value := reflect.TypeOf(e)
+	for value.Kind() == reflect.Ptr {
+		value = value.Elem()
+	}
+	return value
+}
+
+// GetTypeName the type of the given input value, or if input is a pointer, return the type of the pointed to object
+func GetTypeName(e Event) string {
+	return GetType(e).Name()
 }
 
 // GetAggregateID ...

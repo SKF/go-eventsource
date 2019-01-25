@@ -91,14 +91,20 @@ func (o StoreMock) LoadByAggregate(ctx context.Context, aggregateID string) (rec
 }
 
 // LoadBySequenceID is a mock
-func (o StoreMock) LoadBySequenceID(ctx context.Context, sequenceID string) (record []Record, err error) {
-	args := o.Called(ctx, sequenceID)
+func (o StoreMock) LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (record []Record, err error) {
+	args := o.Called(ctx, sequenceID, limit)
+	return args.Get(0).([]Record), args.Error(1)
+}
+
+// LoadBySequenceIDAndType is a mock
+func (o StoreMock) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (record []Record, err error) {
+	args := o.Called(ctx, sequenceID, eventType, limit)
 	return args.Get(0).([]Record), args.Error(1)
 }
 
 // LoadByTimestamp is a mock
-func (o StoreMock) LoadByTimestamp(ctx context.Context, timestamp int64) (record []Record, err error) {
-	args := o.Called(ctx, timestamp)
+func (o StoreMock) LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (record []Record, err error) {
+	args := o.Called(ctx, timestamp, limit)
 	return args.Get(0).([]Record), args.Error(1)
 }
 
@@ -142,14 +148,20 @@ func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (de
 }
 
 // GetEventsBySequenceID is a mock
-func (r RepositoryMock) GetEventsBySequenceID(ctx context.Context, sequenceID string) ([]Event, error) {
-	args := r.Called(ctx, sequenceID)
+func (r RepositoryMock) GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) ([]Event, error) {
+	args := r.Called(ctx, sequenceID, limit)
+	return args.Get(0).([]Event), args.Error(1)
+}
+
+// GetEventsBySequenceIDAndType is a mock
+func (r RepositoryMock) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, limit int) ([]Event, error) {
+	args := r.Called(ctx, sequenceID, eventType, limit)
 	return args.Get(0).([]Event), args.Error(1)
 }
 
 // GetEventsByTimestamp is a mock
-func (r RepositoryMock) GetEventsByTimestamp(ctx context.Context, timestamp int64) ([]Event, error) {
-	args := r.Called(ctx, timestamp)
+func (r RepositoryMock) GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) ([]Event, error) {
+	args := r.Called(ctx, timestamp, limit)
 	return args.Get(0).([]Event), args.Error(1)
 }
 

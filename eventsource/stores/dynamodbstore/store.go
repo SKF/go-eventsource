@@ -63,14 +63,21 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 }
 
 // LoadBySequenceID ...
-func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string) (records []eventsource.Record, err error) {
+func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (records []eventsource.Record, err error) {
+	err = errors.New("Operation not supported on DynamoDB")
+	log.Error(err.Error())
+	return
+}
+
+// LoadBySequenceIDAndType ...
+func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []eventsource.Record, err error) {
 	err = errors.New("Operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return
 }
 
 // LoadByTimestamp
-func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64) (records []eventsource.Record, err error) {
+func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (records []eventsource.Record, err error) {
 	err = errors.New("Operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return

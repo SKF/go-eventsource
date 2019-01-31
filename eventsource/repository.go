@@ -127,7 +127,7 @@ func (repo *repository) Save(ctx context.Context, events ...Event) error {
 
 	if err := tx.Commit(); err != nil {
 		rollbackErr := tx.Rollback()
-		return errors.Wrap(err, "rollback error: %+v", rollbackErr)
+		return errors.Wrapf(err, "rollback error: %+v", rollbackErr)
 	}
 
 	return nil

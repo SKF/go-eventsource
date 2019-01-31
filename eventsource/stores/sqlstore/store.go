@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/SKF/go-eventsource/eventsource"
+	"github.com/pkg/errors"
 )
 
 type store struct {
@@ -37,13 +38,25 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 	} else {
 		limitStr = strconv.Itoa(limit)
 	}
+
 	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(query, store.tablename, limitStr))
 	if err != nil {
+		err = errors.Wrap(err, "failed to prepare sql query")
 		return
 	}
-	defer stmt.Close()
+	defer func() {
+		if errClose := stmt.Close(); errClose != nil {
+			if err != nil {
+				err = errors.Wrapf(err, "failed to close sql statement: %s", errClose)
+			} else {
+				err = errors.Wrap(errClose, "failed to close sql statement")
+			}
+		}
+	}()
+
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
+		err = errors.Wrap(err, "failed to execute sql query")
 		return
 	}
 	for rows.Next() {
@@ -52,11 +65,14 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 			&record.AggregateID, &record.SequenceID, &record.Timestamp,
 			&record.UserID, &record.Type, &record.Data,
 		); err != nil {
+			err = errors.Wrap(err, "failed to scan sql row")
 			return
 		}
 		records = append(records, record)
 	}
+
 	if err = rows.Err(); err != nil {
+		err = errors.Wrap(err, "errors returned from sql store")
 		return
 	}
 	return

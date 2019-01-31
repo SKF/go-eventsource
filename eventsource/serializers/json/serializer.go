@@ -2,10 +2,10 @@ package json
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 
 	"github.com/SKF/go-eventsource/eventsource"
+	"github.com/pkg/errors"
 )
 
 // JSONSerializer takes events and marshals
@@ -27,18 +27,19 @@ func NewSerializer(events ...eventsource.Event) eventsource.Serializer {
 func (s *serializer) Unmarshal(data []byte, eventType string) (out eventsource.Event, err error) {
 	recordType, ok := s.eventTypes[eventType]
 	if !ok {
-		err = fmt.Errorf("Unmarshal error, unbound event type, %v", eventType)
+		err = errors.Errorf("Unmarshal error, unbound event type, %v", eventType)
 		return
 	}
 
 	event := reflect.New(recordType).Interface()
 	if err = json.Unmarshal(data, event); err != nil {
+		err = errors.Wrap(err, "failed to unmarshal event")
 		return
 	}
 
 	out, ok = reflect.ValueOf(event).Elem().Interface().(eventsource.Event)
 	if !ok {
-		err = fmt.Errorf("Event doesn't implement Event")
+		err = errors.Errorf("Event doesn't implement struct Event")
 		return
 	}
 
@@ -47,5 +48,9 @@ func (s *serializer) Unmarshal(data []byte, eventType string) (out eventsource.E
 
 // Marshal implements the Unmarshaler encoding interface
 func (s *serializer) Marshal(event eventsource.Event) (data []byte, err error) {
-	return json.Marshal(event)
+	if data, err = json.Marshal(event); err != nil {
+		err = errors.Wrap(err, "failed to marshal event")
+		return
+	}
+	return
 }

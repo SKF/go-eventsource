@@ -2,15 +2,14 @@ package dynamodbstore
 
 import (
 	"context"
-	"errors"
 
+	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/SKF/go-eventsource/eventsource"
 )
 
 type store struct {
@@ -48,6 +47,7 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 			WithField("input", input).
 			WithField("error", err).
 			Error("Couldn't scan pages")
+		err = errors.Wrap(err, "couldn't scan pages")
 		return
 	}
 
@@ -56,6 +56,7 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 		log.
 			WithField("error", err).
 			Error("Couldn't unmarshal list of maps")
+		err = errors.Wrap(err, "couldn't unmarshal list of maps")
 		return
 	}
 

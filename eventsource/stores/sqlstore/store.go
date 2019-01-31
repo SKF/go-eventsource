@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/pkg/errors"
+
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 type store struct {
@@ -75,7 +76,7 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 		err = errors.Wrap(err, "errors returned from sql store")
 		return
 	}
-	return
+	return records, err
 }
 
 // Load ...

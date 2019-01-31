@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 func Test_SaveLoadRollback_AllInOne(t *testing.T) {

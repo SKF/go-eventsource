@@ -3,13 +3,14 @@ package dynamodbstore
 import (
 	"context"
 
-	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 type store struct {
@@ -19,7 +20,7 @@ type store struct {
 }
 
 // New ...
-func New(sess *session.Session, tableName string) eventsource.Store {
+func New(sess client.ConfigProvider, tableName string) eventsource.Store {
 	return &store{
 		db:             dynamodb.New(sess),
 		tableName:      tableName,
@@ -60,26 +61,26 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 		return
 	}
 
-	return
+	return records, err
 }
 
 // LoadBySequenceID ...
 func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (records []eventsource.Record, err error) {
-	err = errors.New("Operation not supported on DynamoDB")
+	err = errors.New("operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return
 }
 
 // LoadBySequenceIDAndType ...
 func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []eventsource.Record, err error) {
-	err = errors.New("Operation not supported on DynamoDB")
+	err = errors.New("operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return
 }
 
 // LoadByTimestamp
 func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (records []eventsource.Record, err error) {
-	err = errors.New("Operation not supported on DynamoDB")
+	err = errors.New("operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return
 }

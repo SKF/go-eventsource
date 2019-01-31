@@ -4,11 +4,10 @@ go:
 sudo: false
 before_install:
   - curl https://glide.sh/get | sh
+  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.13.2
 install:
   - glide install
-  - go get honnef.co/go/tools/cmd/megacheck
-before_script:
-  - go vet ./...
-  - megacheck $(go list ./... | grep -v /vendor/)
+  - golangci-lint --version
 script:
+  - golangci-lint run ./...
   - go test ./... -race -short

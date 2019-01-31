@@ -12,9 +12,9 @@ import (
 
 var (
 	// ErrDeleted is returned by Aggregate.On() method to signal that the object has been deleted
-	ErrDeleted = errors.New("Not found (was deleted)")
+	ErrDeleted = errors.New("not found (was deleted)")
 	// ErrNoHistory is returned by Repository.Load() when no history exist for the given aggregate ID
-	ErrNoHistory = errors.New("No history found")
+	ErrNoHistory = errors.New("no history found")
 )
 
 // Store is the interface implemented by the data stores that can be used as back end for

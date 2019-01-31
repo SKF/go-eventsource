@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/pkg/errors"
+
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 // JSONSerializer takes events and marshals
@@ -39,7 +40,7 @@ func (s *serializer) Unmarshal(data []byte, eventType string) (out eventsource.E
 
 	out, ok = reflect.ValueOf(event).Elem().Interface().(eventsource.Event)
 	if !ok {
-		err = errors.New("Event doesn't implement struct Event")
+		err = errors.New("event doesn't implement struct Event")
 		return
 	}
 

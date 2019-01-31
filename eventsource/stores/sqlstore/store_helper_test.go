@@ -90,7 +90,7 @@ func createTestEvents(db *sql.DB, tableName string, numberOfEvents int, eventTyp
 		}
 		result = append(result, records[0])
 	}
-	return
+	return result, err
 }
 
 // deleteEvents - delete events (using the SequenceID)

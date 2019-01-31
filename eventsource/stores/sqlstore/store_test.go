@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/SKF/go-eventsource/eventsource/serializers/json"
 	"github.com/SKF/go-utility/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	_ "github.com/lib/pq"
 	"github.com/oklog/ulid"
@@ -35,7 +36,10 @@ func TestLoadBySequenceID(t *testing.T) {
 	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
 	events, err := createTestEvents(db, tableName, 10, eventTypes, [][]byte{[]byte("TestData")})
 	require.NoError(t, err, "Failed to create events")
-	defer cleanup(db, tableName)
+	defer func() {
+		err = cleanup(db, tableName)
+		require.NoError(t, err, "Could not perform DB cleanup")
+	}()
 
 	var records []eventsource.Record
 
@@ -97,7 +101,7 @@ type TestObject struct {
 func (obj *TestObject) On(ctx context.Context, event eventsource.Event) error {
 	switch v := event.(type) {
 	case TestEventA:
-		obj.FieldA = obj.FieldA + v.TestString
+		obj.FieldA += v.TestString
 	case TestEventB:
 		obj.FieldB += v.TestInt
 	default:
@@ -122,7 +126,10 @@ func Test_SQLStoreE2E(t *testing.T) {
 
 	tableName, err := createTable(db)
 	require.NoError(t, err, "Could not create table")
-	defer cleanup(db, tableName)
+	defer func() {
+		err = cleanup(db, tableName)
+		require.NoError(t, err, "Could not perform DB cleanup")
+	}()
 
 	var aggregateID = uuid.New().String()
 	var userIDA, userIDB = uuid.New().String(), uuid.New().String()

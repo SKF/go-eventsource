@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/pkg/errors"
+
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 type transaction struct {
@@ -46,8 +47,7 @@ func (tx *transaction) Commit() (err error) {
 
 func (tx *transaction) Rollback() error {
 	if err := tx.sqlTx.Rollback(); err != nil {
-		errors.Wrap(err, "failed to rollback transaction")
-		return err
+		return errors.Wrap(err, "failed to rollback transaction")
 	}
 	return nil
 }

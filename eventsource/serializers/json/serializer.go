@@ -39,7 +39,7 @@ func (s *serializer) Unmarshal(data []byte, eventType string) (out eventsource.E
 
 	out, ok = reflect.ValueOf(event).Elem().Interface().(eventsource.Event)
 	if !ok {
-		err = errors.Errorf("Event doesn't implement struct Event")
+		err = errors.New("Event doesn't implement struct Event")
 		return
 	}
 

@@ -2,13 +2,12 @@ package eventsource
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 
 	"github.com/oklog/ulid"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -128,7 +127,7 @@ func (repo *repository) Save(ctx context.Context, events ...Event) error {
 
 	if err := tx.Commit(); err != nil {
 		rollbackErr := tx.Rollback()
-		return fmt.Errorf("Rollback error: %+v, Save error: %+v", rollbackErr, err)
+		return errors.Wrapf(err, "rollback error: %+v", rollbackErr)
 	}
 
 	return nil
@@ -190,6 +189,7 @@ func unmarshalRecords(serializer Serializer, records []Record) (events []Event, 
 	for _, record := range records {
 		var event Event
 		if event, err = serializer.Unmarshal(record.Data, record.Type); err != nil {
+			err = errors.Wrap(err, "failed to unmarshal record")
 			return
 		}
 		events = append(events, event)

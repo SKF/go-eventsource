@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/pkg/errors"
 )
 
 type transaction struct {
@@ -31,7 +32,7 @@ func (tx *transaction) Commit() (err error) {
 	for _, record := range tx.records {
 		result, err := dynamodbattribute.MarshalMap(record)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "couldn't marshal record")
 		}
 
 		_, err = tx.store.db.PutItemWithContext(tx.ctx, &dynamodb.PutItemInput{
@@ -39,7 +40,7 @@ func (tx *transaction) Commit() (err error) {
 			Item:      result,
 		})
 		if err != nil {
-			return err
+			return errors.Wrap(err, "couldn't put record to dynamodb store")
 		}
 
 		tx.saved = append(tx.saved, record)
@@ -57,7 +58,7 @@ func (tx *transaction) Rollback() error {
 			},
 		})
 		if err != nil {
-			return err
+			return errors.Wrap(err, "couldn't delete record in dynamodb store")
 		}
 	}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
@@ -20,9 +19,9 @@ type store struct {
 }
 
 // New ...
-func New(sess client.ConfigProvider, tableName string) eventsource.Store {
+func New(db *dynamodb.DynamoDB, tableName string) eventsource.Store {
 	return &store{
-		db:             dynamodb.New(sess),
+		db:             db,
 		tableName:      tableName,
 		consistentRead: true,
 	}

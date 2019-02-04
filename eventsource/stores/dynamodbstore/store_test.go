@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +21,7 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.TODO()
-	store := New(sess, "Events")
+	store := New(dynamodb.New(sess), "Events")
 	tx, err := store.NewTransaction(ctx, []eventsource.Record{
 		{AggregateID: "A", Timestamp: 1},
 		{AggregateID: "A", Timestamp: 2},

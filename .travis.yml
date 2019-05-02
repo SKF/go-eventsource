@@ -3,10 +3,10 @@ go:
   - "1.10"
 sudo: false
 before_install:
-  - curl https://glide.sh/get | sh
+  - go get -u github.com/golang/dep/cmd/dep
   - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.13.2
 install:
-  - glide install
+  - dep ensure
   - golangci-lint --version
 script:
   - golangci-lint run ./...

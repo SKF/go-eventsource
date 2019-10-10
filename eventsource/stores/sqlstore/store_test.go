@@ -20,6 +20,8 @@ import (
 	"github.com/oklog/ulid"
 )
 
+var ctx = context.TODO()
+
 func TestLoadBySequenceID(t *testing.T) {
 	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
 		t.Log("Skipping postgres e2e test")
@@ -42,8 +44,6 @@ func TestLoadBySequenceID(t *testing.T) {
 	}()
 
 	var records []eventsource.Record
-
-	ctx := context.TODO()
 
 	store := New(db, tableName)
 	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID, 0)
@@ -134,24 +134,20 @@ func Test_SQLStoreE2E(t *testing.T) {
 	var aggregateID = uuid.New().String()
 	var userIDA, userIDB = uuid.New().String(), uuid.New().String()
 
-	ctx := context.TODO()
 	repo := eventsource.NewRepository(New(db, tableName), json.NewSerializer(TestEventA{}, TestEventB{}))
-	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestString: "a"})
-	assert.NoError(t, err, "Could not save event to DB")
-	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestString: "b"})
-	assert.NoError(t, err, "Could not save event to DB")
-	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestString: "c"})
-	assert.NoError(t, err, "Could not save event to DB")
-	err = repo.Save(ctx, TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestString: "d"})
-	assert.NoError(t, err, "Could not save event to DB")
-	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestInt: 1})
-	assert.NoError(t, err, "Could not save event to DB")
-	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestInt: 2})
-	assert.NoError(t, err, "Could not save event to DB")
-	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestInt: 3})
-	assert.NoError(t, err, "Could not save event to DB")
-	err = repo.Save(ctx, TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestInt: 4})
-	assert.NoError(t, err, "Could not save event to DB")
+	for _, event := range []eventsource.Event{
+		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestString: "a"},
+		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestString: "b"},
+		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestString: "c"},
+		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestString: "d"},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestInt: 1},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestInt: 2},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestInt: 3},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestInt: 4},
+	} {
+		err = repo.Save(ctx, event)
+		assert.NoError(t, err, "Could not save event to DB")
+	}
 
 	var testObject TestObject
 	deleted, err := repo.Load(ctx, aggregateID, &testObject)

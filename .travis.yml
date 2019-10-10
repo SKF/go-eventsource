@@ -1,13 +1,13 @@
 language: go
 go:
-  - "1.10"
+  - "1.13"
 sudo: false
 before_install:
-  - go get -u github.com/golang/dep/cmd/dep
-  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.13.2
+  - go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.20.0
+  - go install github.com/golangci/golangci-lint/cmd/golangci-lint
 install:
-  - dep ensure
-  - golangci-lint --version
+  - $(go env GOPATH)/bin/golangci-lint --version
 script:
-  - golangci-lint run ./...
-  - go test ./... -race -short
+  - $(go env GOPATH)/bin/golangci-lint run --disable wsl ./...
+  - go build ./...
+  - go test ./... --short

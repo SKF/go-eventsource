@@ -176,6 +176,10 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 			return
 		}
 
+		if event.GetTimestamp() == int64(0) {
+			event.SetTimestamp(record.Timestamp)
+		}
+
 		if err = aggr.On(ctx, event); err == ErrDeleted {
 			return true, nil
 		} else if err != nil {

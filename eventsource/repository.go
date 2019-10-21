@@ -158,10 +158,10 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 }
 
 // Load rehydrates the repo
-func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggregate) (_ bool, err error) {
+func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggregate) (deleted bool, err error) {
 	history, err := repo.store.LoadByAggregate(ctx, aggregateID)
 	if err != nil {
-		return
+		return false, err
 	}
 
 	if len(history) == 0 {
@@ -172,8 +172,10 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 
 	for _, record := range history {
 		var event Event
-		if event, err = repo.serializer.Unmarshal(record.Data, record.Type); err != nil {
-			return
+		event, err = repo.serializer.Unmarshal(record.Data, record.Type)
+
+		if err != nil {
+			return false, err
 		}
 
 		// Some older events created with earlier releases did not have timestamp in
@@ -182,13 +184,18 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 			event.SetTimestamp(record.Timestamp)
 		}
 
-		if err = aggr.On(ctx, event); err == ErrDeleted {
+		err = aggr.On(ctx, event)
+
+		if err == ErrDeleted {
 			return true, nil
-		} else if err != nil {
-			return
+		}
+
+		if err != nil {
+			return false, err
 		}
 	}
-	return
+
+	return false, nil
 }
 
 func unmarshalRecords(serializer Serializer, records []Record) (events []Event, err error) {

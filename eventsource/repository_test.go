@@ -32,6 +32,7 @@ func createMockHistory() []Record {
 			Data:       []byte{byte(3)},
 			Type:       "OtherEvent",
 			SequenceID: "4",
+			Timestamp:  555,
 		},
 	}
 }
@@ -129,6 +130,8 @@ func Test_RepoLoadSuccess(t *testing.T) {
 
 	history, baseEvent, id := createMockDataForLoadAggregate()
 	otherEvent := OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
+	otherBaseEvent := &BaseEvent{AggregateID: "1-22-333-4444-55555", UserID: "TestMan", Timestamp: 555}
+	otherEventCompare := OtherEvent{BaseEvent: otherBaseEvent, OtherEventField: 42}
 
 	ctx := context.TODO()
 	storeMock.On("LoadByAggregate", ctx, id).Return(history, nil)
@@ -139,7 +142,7 @@ func Test_RepoLoadSuccess(t *testing.T) {
 	aggregatorMock.Mock.On("On", ctx, baseEvent).Return(nil)
 	aggregatorMock.Mock.On("On", ctx, baseEvent).Return(nil)
 	aggregatorMock.Mock.On("On", ctx, baseEvent).Return(nil)
-	aggregatorMock.Mock.On("On", ctx, otherEvent).Return(nil)
+	aggregatorMock.Mock.On("On", ctx, otherEventCompare).Return(nil)
 
 	repo := NewRepository(storeMock, serializerMock)
 	deleted, err := repo.Load(ctx, id, aggregatorMock)
@@ -256,6 +259,7 @@ func Test_RepoSaveSuccess(t *testing.T) {
 	testEvent, testData := createMockDataForSave()
 
 	ctx := context.TODO()
+
 	serializerMock.On("Marshal", testEvent).Return(testData, nil)
 	storeMock.On("NewTransaction", ctx, mock.MatchedBy(func(rs []Record) bool {
 		return len(rs) == 1 && matchRecord(rs[0], testEvent, testData)
@@ -298,6 +302,7 @@ func Test_RepoSaveFail_SaveErr(t *testing.T) {
 	testEvent, testData := createMockDataForSave()
 
 	ctx := context.TODO()
+
 	serializerMock.On("Marshal", testEvent).Return(testData, nil)
 	storeMock.On("NewTransaction", ctx, mock.Anything).Return(storeTransactionMock, nil).Once()
 	storeTransactionMock.On("Commit").Return(expectedError).Once()

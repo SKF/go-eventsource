@@ -176,6 +176,8 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 			return
 		}
 
+		// Some older events created with earlier releases did not have timestamp in
+		// record.Data so in those cases we pick up timestamp from event
 		if event.GetTimestamp() == int64(0) {
 			event.SetTimestamp(record.Timestamp)
 		}

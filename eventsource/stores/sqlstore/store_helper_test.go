@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/SKF/go-eventsource/eventsource"
-	"github.com/SKF/go-utility/uuid"
+	"github.com/SKF/go-utility/v2/uuid"
 )
 
 func randomTableName() string {

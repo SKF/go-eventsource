@@ -48,6 +48,12 @@ type Serializer interface {
 	Marshal(event Event) (data []byte, err error)
 }
 
+// NotificationService represents a service which can emit notifications
+// when records are saved to the event source
+type NotificationService interface {
+	SendNotification(record Record) error
+}
+
 // Repository is an interface representing the actual event source.
 type Repository interface {
 	// Save one or more events to the repository
@@ -72,6 +78,9 @@ type Repository interface {
 	// Get all events newer than the given timestamp
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
 	GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) (events []Event, err error)
+
+	// Set notification service
+	SetNotificationService(notificationService NotificationService)
 }
 
 // NewRepository returns a new repository
@@ -80,6 +89,10 @@ func NewRepository(store Store, serializer Serializer) Repository {
 		store:      store,
 		serializer: serializer,
 	}
+}
+
+func (repo *repository) SetNotificationService(ns NotificationService) {
+	repo.notificationService = ns
 }
 
 // Record is a store row. The Data field contains the marshalled Event, and
@@ -93,16 +106,41 @@ type Record struct {
 	UserID      string `json:"userId"`
 }
 
-// EventRecord is returned by GetRecords and contains
-// both the raw Record and the unmarshalled Event
-type EventRecord struct {
-	Record Record
-	Event  Event
+type repository struct {
+	store               Store
+	serializer          Serializer
+	notificationService NotificationService
 }
 
-type repository struct {
-	store      Store
-	serializer Serializer
+type transactionWrapper struct {
+	transaction         StoreTransaction
+	notificationService NotificationService
+	records             []Record
+}
+
+func newTransactionWrapper(ctx context.Context, store Store, records []Record, ns NotificationService) (StoreTransaction, error) {
+	transaction, err := store.NewTransaction(ctx, records...)
+	if err != nil {
+		return nil, err
+	}
+	return &transactionWrapper{transaction, ns, records}, nil
+}
+
+func (transWrap *transactionWrapper) Commit() error {
+	err := transWrap.transaction.Commit()
+	if err != nil {
+		return err
+	}
+	if transWrap.notificationService != nil {
+		for _, r := range transWrap.records {
+			return transWrap.notificationService.SendNotification(r)
+		}
+	}
+	return nil
+}
+
+func (transWrap *transactionWrapper) Rollback() error {
+	return transWrap.transaction.Rollback()
 }
 
 // See https://godoc.org/github.com/oklog/ulid#example-ULID
@@ -154,7 +192,7 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 		})
 	}
 
-	return repo.store.NewTransaction(ctx, records...)
+	return newTransactionWrapper(ctx, repo.store, records, repo.notificationService)
 }
 
 // Load rehydrates the repo

@@ -3,10 +3,11 @@ package notification
 import (
 	"encoding/json"
 
-	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
+
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 type snsNotification struct {

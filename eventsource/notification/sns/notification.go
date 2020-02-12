@@ -11,16 +11,16 @@ import (
 )
 
 type snsNotification struct {
-	topic string
-	sns   *sns.SNS
+	topicARN string
+	sns      *sns.SNS
 }
 
-// NewSNSNotificationService creates an SNS topic
-func NewSNSNotificationService(topic string) eventsource.NotificationService {
+// NewSNSNotificationService connection to the given SNS topic ARN
+func NewSNSNotificationService(topicARN string) eventsource.NotificationService {
 	snsClient := sns.New(
 		session.Must(session.NewSession()),
 	)
-	return &snsNotification{topic, snsClient}
+	return &snsNotification{topicARN, snsClient}
 }
 
 func (sn *snsNotification) SendNotification(record eventsource.Record) error {
@@ -30,7 +30,7 @@ func (sn *snsNotification) SendNotification(record eventsource.Record) error {
 	}
 
 	input := sns.PublishInput{
-		TopicArn: &sn.topic,
+		TopicArn: &sn.topicARN,
 		Message:  aws.String(string(data)),
 	}
 

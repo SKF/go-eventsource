@@ -366,7 +366,7 @@ func Test_RepoSaveFail_SaveErr(t *testing.T) {
 	serializerMock.AssertExpectations(t)
 	storeMock.AssertExpectations(t)
 	storeTransactionMock.AssertExpectations(t)
-	assert.EqualError(t, err, fmt.Sprintf("rollback error: <nil>: %s", expectedError))
+	assert.EqualError(t, err, fmt.Sprintf("failed to commit transaction: %s", expectedError))
 }
 
 func Test_RepoMock_OK(t *testing.T) {

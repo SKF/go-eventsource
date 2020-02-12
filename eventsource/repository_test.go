@@ -275,6 +275,58 @@ func Test_RepoSaveSuccess(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func Test_RepoSaveSuccessNotification(t *testing.T) {
+	storeMock, storeTransactionMock, serializerMock, _ := setupMocks()
+	testEvent, testData := createMockDataForSave()
+	notificationService := CreateNotificationServiceMock()
+
+	ctx := context.TODO()
+
+	serializerMock.On("Marshal", testEvent).Return(testData, nil)
+	storeMock.On("NewTransaction", ctx, mock.MatchedBy(func(rs []Record) bool {
+		return len(rs) == 1 && matchRecord(rs[0], testEvent, testData)
+	})).Return(storeTransactionMock, nil).Once()
+	storeTransactionMock.On("Commit").Return(nil).Once()
+	notificationService.On("SendNotification", mock.MatchedBy(func(r Record) bool {
+		return matchRecord(r, testEvent, testData)
+	})).Return(nil).Once()
+
+	repo := NewRepository(storeMock, serializerMock)
+	repo.SetNotificationService(notificationService)
+	err := repo.Save(ctx, testEvent)
+
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
+	storeTransactionMock.AssertExpectations(t)
+	notificationService.AssertExpectations(t)
+	assert.NoError(t, err)
+}
+
+func Test_RepoSaveFailNoNotification(t *testing.T) {
+	storeMock, storeTransactionMock, serializerMock, _ := setupMocks()
+	testEvent, testData := createMockDataForSave()
+	notificationService := CreateNotificationServiceMock()
+
+	ctx := context.TODO()
+
+	serializerMock.On("Marshal", testEvent).Return(testData, nil)
+	storeMock.On("NewTransaction", ctx, mock.MatchedBy(func(rs []Record) bool {
+		return len(rs) == 1 && matchRecord(rs[0], testEvent, testData)
+	})).Return(storeTransactionMock, nil).Once()
+	storeTransactionMock.On("Commit").Return(errors.New("some error")).Once()
+	storeTransactionMock.On("Rollback").Return(nil).Once()
+
+	repo := NewRepository(storeMock, serializerMock)
+	repo.SetNotificationService(notificationService)
+	err := repo.Save(ctx, testEvent)
+	assert.EqualError(t, err, "failed to commit transaction: some error")
+
+	serializerMock.AssertExpectations(t)
+	storeMock.AssertExpectations(t)
+	storeTransactionMock.AssertExpectations(t)
+	notificationService.AssertExpectations(t)
+}
+
 func matchRecord(r Record, e Event, testData []byte) bool {
 	return r.AggregateID == e.GetAggregateID() && r.UserID == e.GetUserID() && bytes.Equal(r.Data, testData)
 }

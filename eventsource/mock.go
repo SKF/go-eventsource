@@ -165,5 +165,26 @@ func (r RepositoryMock) GetEventsByTimestamp(ctx context.Context, timestamp int6
 	return args.Get(0).([]Event), args.Error(1)
 }
 
+// SetNotificationService is a mock
+func (r RepositoryMock) SetNotificationService(ns NotificationService) {
+	r.Called(ns)
+}
+
+type NotificationServiceMock struct {
+	*mock.Mock
+}
+
+// CreateNotificationServiceMock creates a notification service mock
+func CreateNotificationServiceMock() *NotificationServiceMock {
+	return &NotificationServiceMock{
+		Mock: &mock.Mock{},
+	}
+}
+
+func (ns NotificationServiceMock) SendNotification(record Record) error {
+	args := ns.Called(record)
+	return args.Error(0)
+}
+
 var _ Store = &StoreMock{}
 var _ Repository = &RepositoryMock{}

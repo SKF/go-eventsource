@@ -3,6 +3,7 @@ module github.com/SKF/go-eventsource
 go 1.13
 
 require (
+	github.com/SKF/go-utility v1.10.2 // indirect
 	github.com/SKF/go-utility/v2 v2.0.1
 	github.com/aws/aws-sdk-go v1.25.49
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

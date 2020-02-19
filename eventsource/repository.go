@@ -133,7 +133,9 @@ func (transWrap *transactionWrapper) Commit() error {
 	}
 	if transWrap.notificationService != nil {
 		for _, r := range transWrap.records {
-			return transWrap.notificationService.SendNotification(r)
+			if err = transWrap.notificationService.SendNotification(r); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

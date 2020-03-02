@@ -56,6 +56,9 @@ type NotificationService interface {
 
 // Repository is an interface representing the actual event source.
 type Repository interface {
+	// Return store
+	Store() Store
+
 	// Save one or more events to the repository
 	Save(ctx context.Context, events ...Event) error
 
@@ -156,6 +159,11 @@ func NewULID() string {
 	entropyMutex.Lock()
 	defer entropyMutex.Unlock()
 	return ulid.MustNew(ulid.Now(), entropy).String()
+}
+
+// Return store
+func (repo *repository) Store() Store {
+	return repo.store
 }
 
 // Save persists the event to the repo

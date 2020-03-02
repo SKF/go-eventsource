@@ -129,6 +129,12 @@ func CreateRepositoryMock() *RepositoryMock {
 	}
 }
 
+// Store is a mock
+func (r RepositoryMock) Store() Store {
+	args := r.Called()
+	return args.Get(0).(Store)
+}
+
 // Save is a mock
 func (r RepositoryMock) Save(ctx context.Context, events ...Event) error {
 	args := r.Called(ctx, events)

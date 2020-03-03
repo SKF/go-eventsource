@@ -32,6 +32,12 @@ func (sn *snsNotification) SendNotification(record eventsource.Record) error {
 	input := sns.PublishInput{
 		TopicArn: &sn.topicARN,
 		Message:  aws.String(string(data)),
+		MessageAttributes: map[string]*sns.MessageAttributeValue{
+			"SKF.Enlight.EventType": &sns.MessageAttributeValue{
+				DataType:    aws.String("String"),
+				StringValue: aws.String(record.Type),
+			},
+		},
 	}
 
 	if _, err = sn.sns.Publish(&input); err != nil {

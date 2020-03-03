@@ -121,6 +121,9 @@ type transactionWrapper struct {
 	records             []Record
 }
 
+// ErrNotificationFailed is returned by Commit() if notification service fails
+var ErrNotificationFailed = errors.New("Failed to send notification")
+
 func newTransactionWrapper(ctx context.Context, store Store, records []Record, ns NotificationService) (StoreTransaction, error) {
 	transaction, err := store.NewTransaction(ctx, records...)
 	if err != nil {
@@ -129,6 +132,10 @@ func newTransactionWrapper(ctx context.Context, store Store, records []Record, n
 	return &transactionWrapper{transaction, ns, records}, nil
 }
 
+// Commit transaction to underlying store and, if configured, publish the records to a
+// notification service. If ErrNotificationFailed is returned, the data has been successfully
+// commited to the store, but the notification service failed. In this case, there is no
+// reason to roll back the transaction.
 func (transWrap *transactionWrapper) Commit() error {
 	err := transWrap.transaction.Commit()
 	if err != nil {
@@ -137,7 +144,7 @@ func (transWrap *transactionWrapper) Commit() error {
 	if transWrap.notificationService != nil {
 		for _, r := range transWrap.records {
 			if err = transWrap.notificationService.SendNotification(r); err != nil {
-				return err
+				return ErrNotificationFailed
 			}
 		}
 	}

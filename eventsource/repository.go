@@ -134,7 +134,7 @@ func newTransactionWrapper(ctx context.Context, store Store, records []Record, n
 
 // Commit transaction to underlying store and, if configured, publish the records to a
 // notification service. If ErrNotificationFailed is returned, the data has been successfully
-// commited to the store, but the notification service failed. In this case, there is no
+// committed to the store, but the notification service failed. In this case, there is no
 // reason to roll back the transaction.
 func (transWrap *transactionWrapper) Commit() error {
 	err := transWrap.transaction.Commit()

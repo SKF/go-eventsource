@@ -24,8 +24,7 @@ var ctx = context.TODO()
 
 func TestLoadBySequenceID(t *testing.T) {
 	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
-		t.Log("Skipping postgres e2e test")
-		t.Skip()
+		t.Skip("Skipping postgres e2e test")
 	}
 
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
@@ -116,8 +115,7 @@ func (obj *TestObject) SetAggregateID(id string) {
 
 func Test_SQLStoreE2E(t *testing.T) {
 	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
-		t.Log("Skipping postgres e2e test")
-		t.Skip()
+		t.Skip("Skipping postgres e2e test")
 	}
 
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
@@ -157,13 +155,13 @@ func Test_SQLStoreE2E(t *testing.T) {
 	assert.Equal(t, "abcd", testObject.FieldA)
 	assert.Equal(t, 10, testObject.FieldB)
 
-	events, err := repo.GetEventsBySequenceID(ctx, "", 0)
+	events, err := repo.GetEventsBySequenceID(ctx, "")
 	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 8, len(events))
 	assert.Equal(t, 8, events[0].GetTimestamp())
 	assert.Equal(t, 1, events[len(events)].GetTimestamp())
 
-	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID(), 0)
+	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID())
 	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 1, len(events))
 }

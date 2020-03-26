@@ -74,15 +74,15 @@ type Repository interface {
 
 	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
-	GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) (events []Event, err error)
+	GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (events []Event, err error)
 
 	// Same as GetEventsBySequenceID, but only returns events of the same type
 	// as the one provided in the eventType parameter.
-	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, limit int) (events []Event, err error)
+	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) (events []Event, err error)
 
 	// Get all events newer than the given timestamp
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
-	GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) (events []Event, err error)
+	GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error)
 
 	// Set notification service
 	SetNotificationService(notificationService NotificationService)
@@ -263,25 +263,25 @@ func unmarshalRecords(serializer Serializer, records []Record) (events []Event, 
 	return
 }
 
-func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) (events []Event, err error) {
+func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
-	if records, err = repo.store.LoadBySequenceID(ctx, sequenceID, limit); err != nil {
+	if records, err = repo.store.LoadBySequenceID(ctx, sequenceID, opts...); err != nil {
 		return
 	}
 	return unmarshalRecords(repo.serializer, records)
 }
 
-func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, limit int) (events []Event, err error) {
+func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
-	if records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, GetTypeName(eventType), limit); err != nil {
+	if records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, GetTypeName(eventType), opts...); err != nil {
 		return
 	}
 	return unmarshalRecords(repo.serializer, records)
 }
 
-func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) (events []Event, err error) {
+func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
-	if records, err = repo.store.LoadByTimestamp(ctx, timestamp, limit); err != nil {
+	if records, err = repo.store.LoadByTimestamp(ctx, timestamp, opts...); err != nil {
 		return
 	}
 	return unmarshalRecords(repo.serializer, records)

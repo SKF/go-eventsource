@@ -46,23 +46,23 @@ func TestLoadBySequenceID(t *testing.T) {
 	var records []eventsource.Record
 
 	store := New(db, tableName)
-	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID, 0)
+	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID)
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 9, len(records))
 
-	records, err = store.LoadBySequenceID(ctx, events[len(events)-2].SequenceID, 0)
+	records, err = store.LoadBySequenceID(ctx, events[len(events)-2].SequenceID)
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 1, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(ctx, events[0].SequenceID, "EventTypeA", 0)
+	records, err = store.LoadBySequenceIDAndType(ctx, events[0].SequenceID, "EventTypeA")
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 2, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 0)
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA")
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 3, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 1)
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", WithLimit(1))
 	assert.NoError(t, err, "LoadBySequenceID failed")
 	assert.Equal(t, 1, len(records))
 }

@@ -21,6 +21,7 @@ type options struct {
 	limit  *int
 }
 
+// WithLimit will limit the result
 func WithLimit(limit int) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -29,6 +30,7 @@ func WithLimit(limit int) eventsource.QueryOption {
 	}
 }
 
+// evaluate a list of options by extending the default options
 func evaluateQueryOptions(opts []eventsource.QueryOption) *options {
 	copy := &options{}
 	*copy = *defaultOptions

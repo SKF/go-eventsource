@@ -16,6 +16,7 @@ type options struct {
 	descending bool
 }
 
+// WithLimit will limit the result
 func WithLimit(limit int) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -24,6 +25,7 @@ func WithLimit(limit int) eventsource.QueryOption {
 	}
 }
 
+// WithOffset will offset the result
 func WithOffset(offset int) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -32,6 +34,7 @@ func WithOffset(offset int) eventsource.QueryOption {
 	}
 }
 
+// WithDescending will set the sorting order to descending
 func WithDescending() eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -40,6 +43,16 @@ func WithDescending() eventsource.QueryOption {
 	}
 }
 
+// WithAscending will set the sorting order to ascending
+func WithAscending() eventsource.QueryOption {
+	return func(i interface{}) {
+		if o, ok := i.(*options); ok {
+			o.descending = false
+		}
+	}
+}
+
+// evaluate a list of options by extending the default options
 func evaluateQueryOptions(opts []eventsource.QueryOption) *options {
 	copy := &options{}
 	*copy = *defaultOptions

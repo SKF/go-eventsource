@@ -17,6 +17,8 @@ var (
 	ErrNoHistory = errors.New("no history found")
 )
 
+// QueryOption is used for setting store specific options like limit or sorting
+// Can be found in any of the stores
 type QueryOption func(opt interface{})
 
 // Store is the interface implemented by the data stores that can be used as back end for

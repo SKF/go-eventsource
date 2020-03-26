@@ -140,10 +140,10 @@ func Test_SQLStoreE2E(t *testing.T) {
 		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestString: "b"},
 		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestString: "c"},
 		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestString: "d"},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestInt: 1},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestInt: 2},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestInt: 3},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestInt: 4},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 5}, TestInt: 1},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 6}, TestInt: 2},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 7}, TestInt: 3},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 8}, TestInt: 4},
 	} {
 		err = repo.Save(ctx, event)
 		assert.NoError(t, err, "Could not save event to DB")
@@ -160,6 +160,8 @@ func Test_SQLStoreE2E(t *testing.T) {
 	events, err := repo.GetEventsBySequenceID(ctx, "", 0)
 	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 8, len(events))
+	assert.Equal(t, 8, events[0].GetTimestamp())
+	assert.Equal(t, 1, events[len(events)].GetTimestamp())
 
 	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID(), 0)
 	assert.NoError(t, err, "Could not get events")

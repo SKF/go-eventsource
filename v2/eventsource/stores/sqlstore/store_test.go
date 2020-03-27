@@ -22,66 +22,6 @@ import (
 
 var ctx = context.TODO()
 
-func TestLoadBySequenceID(t *testing.T) {
-	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
-		t.Log("Skipping postgres e2e test")
-		t.Skip()
-	}
-
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
-	require.NoError(t, err, "Could not connect to db")
-	defer db.Close()
-
-	tableName, err := createTable(db)
-	require.NoError(t, err, "Could not create table")
-
-	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
-	events, err := createTestEvents(db, tableName, 10, eventTypes, [][]byte{[]byte("TestData")})
-	require.NoError(t, err, "Failed to create events")
-	defer func() {
-		err = cleanup(db, tableName)
-		require.NoError(t, err, "Could not perform DB cleanup")
-	}()
-
-	var records []eventsource.Record
-
-	store := New(db, tableName)
-	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID, 0)
-	assert.NoError(t, err, "LoadBySequenceID failed")
-	assert.Equal(t, 9, len(records))
-
-	records, err = store.LoadBySequenceID(ctx, events[len(events)-2].SequenceID, 0)
-	assert.NoError(t, err, "LoadBySequenceID failed")
-	assert.Equal(t, 1, len(records))
-
-	records, err = store.LoadBySequenceIDAndType(ctx, events[0].SequenceID, "EventTypeA", 0)
-	assert.NoError(t, err, "LoadBySequenceID failed")
-	assert.Equal(t, 2, len(records))
-
-	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 0)
-	assert.NoError(t, err, "LoadBySequenceID failed")
-	assert.Equal(t, 3, len(records))
-
-	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", 1)
-	assert.NoError(t, err, "LoadBySequenceID failed")
-	assert.Equal(t, 1, len(records))
-}
-
-func TestULID(t *testing.T) {
-	var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
-	ulidNow := ulid.Now()
-	var ulids []string
-	ulidMap := make(map[string]int, 10000)
-	for i := 0; i < 10000; i++ {
-		ulids = append(ulids, ulid.MustNew(ulidNow, entropy).String())
-		ulidMap[ulids[i]] = i
-		if i > 0 {
-			assert.True(t, ulids[i] > ulids[i-1])
-		}
-	}
-	assert.Equal(t, len(ulidMap), 10000)
-}
-
 type TestEventA struct {
 	*eventsource.BaseEvent
 	TestString string `json:"testString"`
@@ -90,6 +30,11 @@ type TestEventA struct {
 type TestEventB struct {
 	*eventsource.BaseEvent
 	TestInt int `json:"testInt"`
+}
+
+type TestEventPosition struct {
+	*eventsource.BaseEvent
+	Position int
 }
 
 type TestObject struct {
@@ -114,22 +59,76 @@ func (obj *TestObject) SetAggregateID(id string) {
 	obj.AggID = id
 }
 
-func Test_SQLStoreE2E(t *testing.T) {
+func setupDB(t *testing.T) (*sql.DB, string) {
 	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
-		t.Log("Skipping postgres e2e test")
-		t.Skip()
+		t.Skip("Skipping postgres e2e test")
 	}
 
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
 	require.NoError(t, err, "Could not connect to db")
-	defer db.Close()
 
 	tableName, err := createTable(db)
 	require.NoError(t, err, "Could not create table")
-	defer func() {
-		err = cleanup(db, tableName)
-		require.NoError(t, err, "Could not perform DB cleanup")
-	}()
+
+	return db, tableName
+}
+
+func cleanupDB(t *testing.T, db *sql.DB, tableName string) {
+	defer db.Close()
+	err := cleanup(db, tableName)
+	require.NoError(t, err, "Could not perform DB cleanup")
+}
+
+func TestLoadBySequenceID(t *testing.T) {
+	db, tableName := setupDB(t)
+	defer cleanupDB(t, db, tableName)
+
+	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
+	events, err := createTestEvents(db, tableName, 10, eventTypes, [][]byte{[]byte("TestData")})
+	require.NoError(t, err, "Failed to create events")
+
+	var records []eventsource.Record
+
+	store := New(db, tableName)
+	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID)
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 9, len(records))
+
+	records, err = store.LoadBySequenceID(ctx, events[len(events)-2].SequenceID)
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 1, len(records))
+
+	records, err = store.LoadBySequenceIDAndType(ctx, events[0].SequenceID, "EventTypeA")
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 2, len(records))
+
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA")
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 3, len(records))
+
+	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", WithLimit(1))
+	assert.NoError(t, err, "LoadBySequenceID failed")
+	assert.Equal(t, 1, len(records))
+}
+
+func Test_ULID(t *testing.T) {
+	var entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	ulidNow := ulid.Now()
+	var ulids []string
+	ulidMap := make(map[string]int, 10000)
+	for i := 0; i < 10000; i++ {
+		ulids = append(ulids, ulid.MustNew(ulidNow, entropy).String())
+		ulidMap[ulids[i]] = i
+		if i > 0 {
+			assert.True(t, ulids[i] > ulids[i-1])
+		}
+	}
+	assert.Equal(t, len(ulidMap), 10000)
+}
+
+func Test_SQLStoreE2E(t *testing.T) {
+	db, tableName := setupDB(t)
+	defer cleanupDB(t, db, tableName)
 
 	var aggregateID = uuid.New().String()
 	var userIDA, userIDB = uuid.New().String(), uuid.New().String()
@@ -140,12 +139,12 @@ func Test_SQLStoreE2E(t *testing.T) {
 		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestString: "b"},
 		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestString: "c"},
 		TestEventA{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestString: "d"},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 1}, TestInt: 1},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 2}, TestInt: 2},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 3}, TestInt: 3},
-		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 4}, TestInt: 4},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 5}, TestInt: 1},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 6}, TestInt: 2},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDA, Timestamp: 7}, TestInt: 3},
+		TestEventB{BaseEvent: &eventsource.BaseEvent{AggregateID: aggregateID, UserID: userIDB, Timestamp: 8}, TestInt: 4},
 	} {
-		err = repo.Save(ctx, event)
+		err := repo.Save(ctx, event)
 		assert.NoError(t, err, "Could not save event to DB")
 	}
 
@@ -157,11 +156,62 @@ func Test_SQLStoreE2E(t *testing.T) {
 	assert.Equal(t, "abcd", testObject.FieldA)
 	assert.Equal(t, 10, testObject.FieldB)
 
-	events, err := repo.GetEventsBySequenceID(ctx, "", 0)
+	events, err := repo.GetEventsBySequenceID(ctx, "")
 	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 8, len(events))
 
-	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID(), 0)
+	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID())
 	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 1, len(events))
+}
+
+func Test_SQLStoreOptions(t *testing.T) {
+	db, tableName := setupDB(t)
+	defer cleanupDB(t, db, tableName)
+
+	repo := eventsource.NewRepository(New(db, tableName), json.NewSerializer(TestEventPosition{}))
+
+	var (
+		aggregateID = uuid.New().String()
+		testData    = []TestEventPosition{}
+		testSize    = 15
+	)
+	require.True(t, testSize > 5, "testSize needs to be more than five")
+	for i := 1; i <= testSize; i++ {
+		testData = append(testData, TestEventPosition{
+			BaseEvent: &eventsource.BaseEvent{
+				AggregateID: aggregateID,
+				UserID:      uuid.New().String(),
+			},
+			Position: i,
+		})
+	}
+	for _, event := range testData {
+		err := repo.Save(ctx, event)
+		assert.NoError(t, err, "Could not save event to DB")
+	}
+
+	events, err := repo.GetEventsBySequenceID(ctx, "", WithAscending())
+	assert.NoError(t, err, "Could not get events")
+	require.Equal(t, len(testData), len(events))
+	assert.Equal(t, testData[0].Position, events[0].(TestEventPosition).Position)
+	assert.Equal(t, testData[testSize-4].Position, events[testSize-4].(TestEventPosition).Position)
+	assert.Equal(t, testData[testSize-1].Position, events[testSize-1].(TestEventPosition).Position)
+
+	events, err = repo.GetEventsBySequenceID(ctx, "", WithDescending())
+	assert.NoError(t, err, "Could not get events")
+	require.Equal(t, len(testData), len(events))
+	assert.Equal(t, testData[testSize-1].Position, events[0].(TestEventPosition).Position)
+	assert.Equal(t, testData[testSize-4].Position, events[3].(TestEventPosition).Position)
+	assert.Equal(t, testData[0].Position, events[testSize-1].(TestEventPosition).Position)
+
+	var (
+		limit  = 5
+		offset = 1
+	)
+	events, err = repo.GetEventsBySequenceID(ctx, "", WithOffset(offset), WithLimit(limit))
+	assert.NoError(t, err, "Could not get events")
+	require.Equal(t, limit, len(events))
+	assert.Equal(t, testData[offset].Position, events[0].(TestEventPosition).Position)
+	assert.Equal(t, testData[offset+4].Position, events[4].(TestEventPosition).Position)
 }

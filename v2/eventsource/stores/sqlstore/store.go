@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -18,10 +18,10 @@ type store struct {
 
 const (
 	saveSQL                    = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
-	loadAggregateSQL           = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT %s"
-	loadBySequenceIDSQL        = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 ORDER BY sequence_id ASC LIMIT %s"
-	loadBySequenceIDAndTypeSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 AND type = $2 ORDER BY sequence_id ASC LIMIT %s"
-	loadByTimestampSQL         = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE created_at > $1 ORDER BY created_at ASC LIMIT %s"
+	loadAggregateSQL           = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1"
+	loadBySequenceIDSQL        = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1"
+	loadBySequenceIDAndTypeSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 AND type = $2"
+	loadByTimestampSQL         = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE created_at > $1"
 )
 
 // New ...
@@ -32,15 +32,30 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-func (store *store) fetchRecords(ctx context.Context, query string, limit int, args ...interface{}) (records []eventsource.Record, err error) {
-	var limitStr string
-	if limit == 0 {
-		limitStr = "ALL"
+func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string) string {
+	fullQuery := []string{fmt.Sprintf(query, store.tablename)}
+	opts := evaluateQueryOptions(queryOpts)
+
+	if opts.descending {
+		fullQuery = append(fullQuery, "ORDER BY sequence_id DESC")
 	} else {
-		limitStr = strconv.Itoa(limit)
+		fullQuery = append(fullQuery, "ORDER BY sequence_id ASC")
 	}
 
-	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(query, store.tablename, limitStr))
+	if opts.limit != nil {
+		fullQuery = append(fullQuery, fmt.Sprintf("LIMIT %d", *opts.limit))
+	}
+
+	if opts.offset != nil {
+		fullQuery = append(fullQuery, fmt.Sprintf("OFFSET %d", *opts.offset))
+	}
+
+	return strings.Join(fullQuery, " ")
+}
+
+func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.QueryOption, query string, args ...interface{}) (records []eventsource.Record, err error) {
+	fullQuery := store.buildQuery(queryOpts, query)
+	stmt, err := store.db.PrepareContext(ctx, fullQuery)
 	if err != nil {
 		err = errors.Wrap(err, "failed to prepare sql query")
 		return
@@ -80,18 +95,18 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 }
 
 // Load ...
-func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, loadAggregateSQL, 0, aggregateID)
+func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.fetchRecords(ctx, opts, loadAggregateSQL, aggregateID)
 }
 
-func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, loadBySequenceIDSQL, limit, sequenceID)
+func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.fetchRecords(ctx, opts, loadBySequenceIDSQL, sequenceID)
 }
 
-func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, loadBySequenceIDAndTypeSQL, limit, sequenceID, eventType)
+func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.fetchRecords(ctx, opts, loadBySequenceIDAndTypeSQL, sequenceID, eventType)
 }
 
-func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, loadByTimestampSQL, limit, timestamp)
+func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.fetchRecords(ctx, opts, loadByTimestampSQL, timestamp)
 }

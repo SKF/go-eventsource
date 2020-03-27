@@ -2,7 +2,6 @@ package memorystore
 
 import (
 	"context"
-	"sort"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
 )
@@ -19,50 +18,46 @@ func New() eventsource.Store {
 }
 
 // Load ...
-func (mem *store) LoadByAggregate(_ context.Context, aggregateID string) (records []eventsource.Record, err error) {
+func (mem *store) LoadByAggregate(_ context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	if rows, ok := mem.Data[aggregateID]; ok {
 		return rows, nil
 	}
 	return records, nil
 }
 
-func sortRecords(records []eventsource.Record) {
-	sort.Slice(records, func(i, j int) bool {
-		return records[i].SequenceID < records[j].SequenceID
-	})
-}
+func (mem *store) loadRecords(opts []eventsource.QueryOption, includeRecord func(eventsource.Record) bool) (records []eventsource.Record, err error) {
+	queryOpts := evaluateQueryOptions(opts)
 
-func (mem *store) loadRecords(includeRecord func(eventsource.Record) bool, limit int) (records []eventsource.Record, err error) {
 	var recordSlice []eventsource.Record
 	for _, aggregate := range mem.Data {
 		recordSlice = append(recordSlice, aggregate...)
 	}
-	sortRecords(recordSlice)
+	queryOpts.sorter(recordSlice)
 	for _, record := range recordSlice {
 		if includeRecord(record) {
 			records = append(records, record)
 		}
-		if limit != 0 && len(records) >= limit {
+		if queryOpts.limit != nil && len(records) >= *queryOpts.limit {
 			return
 		}
 	}
 	return
 }
 
-func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string, limit int) (records []eventsource.Record, err error) {
-	return mem.loadRecords(func(record eventsource.Record) (include bool) {
+func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return mem.loadRecords(opts, func(record eventsource.Record) (include bool) {
 		return record.SequenceID > sequenceID
-	}, limit)
+	})
 }
 
-func (mem *store) LoadBySequenceIDAndType(_ context.Context, sequenceID string, eventType string, limit int) (records []eventsource.Record, err error) {
-	return mem.loadRecords(func(record eventsource.Record) (include bool) {
+func (mem *store) LoadBySequenceIDAndType(_ context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return mem.loadRecords(opts, func(record eventsource.Record) (include bool) {
 		return record.SequenceID > sequenceID && record.Type == eventType
-	}, limit)
+	})
 }
 
-func (mem *store) LoadByTimestamp(_ context.Context, timestamp int64, limit int) (records []eventsource.Record, err error) {
-	return mem.loadRecords(func(record eventsource.Record) (include bool) {
+func (mem *store) LoadByTimestamp(_ context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return mem.loadRecords(opts, func(record eventsource.Record) (include bool) {
 		return record.Timestamp > timestamp
-	}, limit)
+	})
 }

@@ -27,16 +27,16 @@ type Repository interface {
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 
 	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
-	// Return at most limit records. If limit is 0, don't limit the number of records returned.
-	GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) (events []Event, err error)
+	// Use store specific query options to either limit or sort the events
+	GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOptions) (events []Event, err error)
 
 	// Same as GetEventsBySequenceID, but only returns events of the same type
 	// as the one provided in the eventType parameter.
-	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, limit int) (events []Event, err error)
+	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOptions) (events []Event, err error)
 
 	// Get all events newer than the given timestamp
-	// Return at most limit records. If limit is 0, don't limit the number of records returned.
-	GetEventsByTimestamp(ctx context.Context, timestamp int64, limit int) (events []Event, err error)
+	// Use store specific query options to either limit or sort the events
+	GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOptions) (events []Event, err error)
 }
 ```
 
@@ -55,12 +55,14 @@ Included stores:
 If you want to add your own store or serializer, the package has these defined interfaces.
 
 ```
+type CallOptions func(i interface{})
+
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
-	LoadByAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
-	LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (record []Record, err error)
-	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []Record, err error)
-	LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (record []Record, err error)
+	LoadByAggregate(ctx context.Context, aggregateID string, opts ...QueryOptions) (record []Record, err error)
+	LoadBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOptions) (record []Record, err error)
+	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...QueryOptions) (records []Record, err error)
+	LoadByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOptions) (record []Record, err error)
 }
 
 type StoreTransaction interface {

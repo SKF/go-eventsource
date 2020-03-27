@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 
-	"github.com/SKF/go-eventsource/v2"
+	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type snsNotification struct {

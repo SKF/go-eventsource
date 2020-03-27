@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/SKF/go-eventsource/v2"
+	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type store struct {

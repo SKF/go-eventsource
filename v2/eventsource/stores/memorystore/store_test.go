@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SKF/go-eventsource/v2"
+	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 func Test_SaveLoadRollback_AllInOne(t *testing.T) {

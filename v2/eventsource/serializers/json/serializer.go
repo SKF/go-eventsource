@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/SKF/go-eventsource/v2"
+	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 // JSONSerializer takes events and marshals

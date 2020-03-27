@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SKF/go-eventsource/v2"
-	"github.com/SKF/go-eventsource/v2/serializers/json"
+	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-eventsource/v2/eventsource/serializers/json"
 	"github.com/SKF/go-utility/v2/uuid"
 
 	_ "github.com/lib/pq"

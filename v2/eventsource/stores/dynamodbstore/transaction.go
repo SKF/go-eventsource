@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 
-	"github.com/SKF/go-eventsource/v2"
+	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type transaction struct {

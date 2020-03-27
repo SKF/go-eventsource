@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/SKF/go-eventsource/v2"
+	"github.com/SKF/go-eventsource/v2/eventsource"
 	"github.com/SKF/go-utility/v2/uuid"
 )
 

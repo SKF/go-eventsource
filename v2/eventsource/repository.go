@@ -55,7 +55,7 @@ type Serializer interface {
 // NotificationService represents a service which can emit notifications
 // when records are saved to the event source
 type NotificationService interface {
-	SendNotification(record Record) error
+	Send(record Record) error
 }
 
 // Repository is an interface representing the actual event source.
@@ -86,20 +86,21 @@ type Repository interface {
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
 	GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error)
 
-	// Set notification service
-	SetNotificationService(notificationService NotificationService)
+	// Add notification service
+	AddNotificationService(service NotificationService)
 }
 
 // NewRepository returns a new repository
 func NewRepository(store Store, serializer Serializer) Repository {
 	return &repository{
-		store:      store,
-		serializer: serializer,
+		store:                store,
+		serializer:           serializer,
+		notificationServices: []NotificationService{},
 	}
 }
 
-func (repo *repository) SetNotificationService(ns NotificationService) {
-	repo.notificationService = ns
+func (repo *repository) AddNotificationService(service NotificationService) {
+	repo.notificationServices = append(repo.notificationServices, service)
 }
 
 // Record is a store row. The Data field contains the marshalled Event, and
@@ -114,18 +115,18 @@ type Record struct {
 }
 
 type repository struct {
-	store               Store
-	serializer          Serializer
-	notificationService NotificationService
+	store                Store
+	serializer           Serializer
+	notificationServices []NotificationService
 }
 
 type transactionWrapper struct {
-	transaction         StoreTransaction
-	notificationService NotificationService
-	records             []Record
+	transaction          StoreTransaction
+	notificationServices []NotificationService
+	records              []Record
 }
 
-func newTransactionWrapper(ctx context.Context, store Store, records []Record, ns NotificationService) (StoreTransaction, error) {
+func newTransactionWrapper(ctx context.Context, store Store, records []Record, ns []NotificationService) (StoreTransaction, error) {
 	transaction, err := store.NewTransaction(ctx, records...)
 	if err != nil {
 		return nil, err
@@ -138,9 +139,9 @@ func (transWrap *transactionWrapper) Commit() error {
 	if err != nil {
 		return err
 	}
-	if transWrap.notificationService != nil {
+	for _, service := range transWrap.notificationServices {
 		for _, r := range transWrap.records {
-			if err = transWrap.notificationService.SendNotification(r); err != nil {
+			if err = service.Send(r); err != nil {
 				return err
 			}
 		}
@@ -209,7 +210,7 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 		})
 	}
 
-	return newTransactionWrapper(ctx, repo.store, records, repo.notificationService)
+	return newTransactionWrapper(ctx, repo.store, records, repo.notificationServices)
 }
 
 // Load rehydrates the repo

@@ -15,15 +15,15 @@ type snsNotification struct {
 	sns      *sns.SNS
 }
 
-// NewSNSNotificationService connection to the given SNS topic ARN
-func NewSNSNotificationService(topicARN string) eventsource.NotificationService {
+// New connection to the given SNS topic ARN
+func New(topicARN string) eventsource.NotificationService {
 	snsClient := sns.New(
 		session.Must(session.NewSession()),
 	)
 	return &snsNotification{topicARN, snsClient}
 }
 
-func (sn *snsNotification) SendNotification(record eventsource.Record) error {
+func (sn *snsNotification) Send(record eventsource.Record) error {
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err

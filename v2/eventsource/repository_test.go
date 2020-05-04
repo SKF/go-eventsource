@@ -287,12 +287,13 @@ func Test_RepoSaveSuccessNotification(t *testing.T) {
 		return len(rs) == 1 && matchRecord(rs[0], testEvent, testData)
 	})).Return(storeTransactionMock, nil).Once()
 	storeTransactionMock.On("Commit").Return(nil).Once()
-	notificationService.On("SendNotification", mock.MatchedBy(func(r Record) bool {
+	notificationService.On("Send", mock.MatchedBy(func(r Record) bool {
 		return matchRecord(r, testEvent, testData)
-	})).Return(nil).Once()
+	})).Return(nil).Twice()
 
 	repo := NewRepository(storeMock, serializerMock)
-	repo.SetNotificationService(notificationService)
+	repo.AddNotificationService(notificationService)
+	repo.AddNotificationService(notificationService)
 	err := repo.Save(ctx, testEvent)
 
 	serializerMock.AssertExpectations(t)
@@ -317,7 +318,7 @@ func Test_RepoSaveFailNoNotification(t *testing.T) {
 	storeTransactionMock.On("Rollback").Return(nil).Once()
 
 	repo := NewRepository(storeMock, serializerMock)
-	repo.SetNotificationService(notificationService)
+	repo.AddNotificationService(notificationService)
 	err := repo.Save(ctx, testEvent)
 	assert.EqualError(t, err, "failed to commit transaction: some error")
 

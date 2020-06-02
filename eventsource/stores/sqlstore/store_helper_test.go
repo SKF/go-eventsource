@@ -37,7 +37,7 @@ func createTable(db *sql.DB) (tableName string, err error) {
 }
 
 // createTestEventsForAggregate - create some random test events in sequence
-func createTestEventsForAggregates(db *sql.DB, tableName string, numberOfAggregates int, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result map[string][]eventsource.Record, err error) {
+func createTestEventsForAggregate(db *sql.DB, tableName string, numberOfAggregates int, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result map[string][]eventsource.Record, err error) {
 	result = map[string][]eventsource.Record{}
 
 	store := New(db, tableName)
@@ -48,7 +48,6 @@ func createTestEventsForAggregates(db *sql.DB, tableName string, numberOfAggrega
 	}
 
 	for i := 0; i < numberOfEvents; i++ {
-
 		aggID := aggregates[rand.Intn(len(aggregates)-0)+0]
 
 		userID := uuid.New()

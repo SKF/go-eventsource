@@ -239,9 +239,8 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 	return ApplyRecords(ctx, aggr, history, repo.serializer)
 }
 
-//ApplyRecords to aggregate.
+// ApplyRecords to aggregate.
 func ApplyRecords(ctx context.Context, aggr Aggregate, records []Record, serializer Serializer) (deleted bool, err error) {
-
 	for _, record := range records {
 		var event Event
 		event, err = serializer.Unmarshal(record.Data, record.Type)

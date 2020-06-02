@@ -63,7 +63,6 @@ func TestGetRecordsForAggregate(t *testing.T) {
 			assert.Equal(t, expectedRecords, middleRecords)
 		}
 	}
-
 }
 func TestLoadBySequenceID(t *testing.T) {
 	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {

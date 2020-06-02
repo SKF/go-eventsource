@@ -50,9 +50,7 @@ func createTestEventsForAggregates(db *sql.DB, tableName string, numberOfAggrega
 	for i := 0; i < numberOfEvents; i++ {
 
 		aggID := aggregates[rand.Intn(len(aggregates)-0)+0]
-		fmt.Println(aggregates)
 
-		fmt.Println(aggID)
 		userID := uuid.New()
 		eventType := fmt.Sprintf("TestEvent %d", i+1)
 		if i < len(eventTypeList) {

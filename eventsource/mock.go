@@ -153,6 +153,12 @@ func (r RepositoryMock) SaveTransaction(ctx context.Context, events ...Event) (S
 	return args.Get(0).(StoreTransaction), args.Error(1)
 }
 
+//GetAggregateEvents is a mock
+func (r RepositoryMock) GetAggregateEvents(ctx context.Context, aggregateID string, sequenceID string) ([]Event, error) {
+	args := r.Called(ctx, aggregateID, sequenceID)
+	return args.Get(0).([]Event), args.Error(1)
+}
+
 // Load is a mock
 func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error) {
 	args := r.Called(ctx, id, aggr)

@@ -72,6 +72,11 @@ type Repository interface {
 	// "fast forwarded" to the current state.
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 
+	// GetAggregateEvents fetches events for an aggregate,
+	// if sequenceID is specified then only the newer events from that point in time is fetched
+	// else all events are fetched.
+	GetAggregateEvents(ctx context.Context, id string, sequenceID string) (events []Event, err error)
+
 	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
 	GetEventsBySequenceID(ctx context.Context, sequenceID string, limit int) (events []Event, err error)
@@ -208,6 +213,15 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 	}
 
 	return newTransactionWrapper(ctx, repo.store, records, repo.notificationService)
+}
+
+//GetAggregateEvents fetches events for an aggregate, if sequenceID is "" then all events are fetched.
+func (repo repository) GetAggregateEvents(ctx context.Context, aggregateID string, sequenceID string) ([]Event, error) {
+	events, err := repo.store.GetRecordsForAggregate(ctx, aggregateID, sequenceID)
+	if err != nil {
+		return []Event{}, err
+	}
+	return unmarshalRecords(repo.serializer, events)
 }
 
 // Load rehydrates the repo

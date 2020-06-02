@@ -48,7 +48,11 @@ func (mem *store) loadRecords(includeRecord func(eventsource.Record) bool, limit
 	}
 	return
 }
-
+func (mem *store) GetRecordsForAggregate(ctx context.Context, aggregateID string, sequenceID string) (records []eventsource.Record, err error) {
+	return mem.loadRecords(func(record eventsource.Record) (include bool) {
+		return record.AggregateID == aggregateID && record.SequenceID > sequenceID
+	}, 0)
+}
 func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string, limit int) (records []eventsource.Record, err error) {
 	return mem.loadRecords(func(record eventsource.Record) (include bool) {
 		return record.SequenceID > sequenceID

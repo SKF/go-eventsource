@@ -22,6 +22,8 @@ var (
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
 	LoadByAggregate(ctx context.Context, aggregateID string) (record []Record, err error)
+	//GetRecordsForAggregate if sequenceID is specified it will load the new records from that point. If sequenceID dont exist all records will be loaded.
+	GetRecordsForAggregate(ctx context.Context, aggregateID string, sequenceID string) (record []Record, err error)
 	LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (record []Record, err error)
 	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []Record, err error)
 	LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (record []Record, err error)
@@ -218,12 +220,17 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 	if len(history) == 0 {
 		return false, ErrNoHistory
 	}
-
 	aggr.SetAggregateID(aggregateID)
 
-	for _, record := range history {
+	return ApplyRecords(ctx, aggr, history, repo.serializer)
+}
+
+//ApplyRecords to aggregate.
+func ApplyRecords(ctx context.Context, aggr Aggregate, records []Record, serializer Serializer) (deleted bool, err error) {
+
+	for _, record := range records {
 		var event Event
-		event, err = repo.serializer.Unmarshal(record.Data, record.Type)
+		event, err = serializer.Unmarshal(record.Data, record.Type)
 
 		if err != nil {
 			return false, err

@@ -70,6 +70,13 @@ func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, lim
 	return
 }
 
+//GetRecordsForAggregate
+func (store *store) GetRecordsForAggregate(ctx context.Context, aggregateID string, sequenceID string) (records []eventsource.Record, err error) {
+	err = errors.New("operation not supported on DynamoDB")
+	log.Error(err.Error())
+	return
+}
+
 // LoadBySequenceIDAndType ...
 func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")

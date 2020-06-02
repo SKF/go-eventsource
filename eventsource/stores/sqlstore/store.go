@@ -19,6 +19,7 @@ type store struct {
 const (
 	saveSQL                    = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
 	loadAggregateSQL           = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 ORDER BY sequence_id ASC LIMIT %s"
+	loadAggregateBySequenceSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1 AND sequence_id > $2 ORDER BY sequence_id ASC LIMIT %s"
 	loadBySequenceIDSQL        = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 ORDER BY sequence_id ASC LIMIT %s"
 	loadBySequenceIDAndTypeSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 AND type = $2 ORDER BY sequence_id ASC LIMIT %s"
 	loadByTimestampSQL         = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE created_at > $1 ORDER BY created_at ASC LIMIT %s"
@@ -77,6 +78,13 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 		return
 	}
 	return records, err
+}
+
+func (store *store) GetRecordsForAggregate(ctx context.Context, aggregateID string, sequenceID string) (record []eventsource.Record, err error) {
+	if sequenceID == "" {
+		return store.LoadByAggregate(ctx, aggregateID)
+	}
+	return store.fetchRecords(ctx, loadAggregateBySequenceSQL, 0, aggregateID, sequenceID)
 }
 
 // Load ...

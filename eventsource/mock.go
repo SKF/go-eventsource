@@ -84,6 +84,12 @@ func (o StoreMock) NewTransaction(ctx context.Context, records ...Record) (Store
 	return args.Get(0).(StoreTransaction), args.Error(1)
 }
 
+// LoadByAggregateFrom is a mock
+func (o StoreMock) GetRecordsForAggregate(ctx context.Context, aggregateID string, sequenceID string) (record []Record, err error) {
+	args := o.Called(ctx, aggregateID, sequenceID)
+	return args.Get(0).([]Record), args.Error(1)
+}
+
 // LoadByAggregate is a mock
 func (o StoreMock) LoadByAggregate(ctx context.Context, aggregateID string) (record []Record, err error) {
 	args := o.Called(ctx, aggregateID)

@@ -36,6 +36,73 @@ func createTable(db *sql.DB) (tableName string, err error) {
 	return
 }
 
+// createTestEventsForAggregate - create some random test events in sequence
+func createTestEventsForAggregates(db *sql.DB, tableName string, numberOfAggregates int, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result map[string][]eventsource.Record, err error) {
+	result = map[string][]eventsource.Record{}
+
+	store := New(db, tableName)
+
+	aggregates := map[int]string{}
+	for i := 0; i < numberOfAggregates; i++ {
+		aggregates[i] = uuid.New().String()
+	}
+
+	for i := 0; i < numberOfEvents; i++ {
+
+		aggID := aggregates[rand.Intn(len(aggregates)-0)+0]
+		fmt.Println(aggregates)
+
+		fmt.Println(aggID)
+		userID := uuid.New()
+		eventType := fmt.Sprintf("TestEvent %d", i+1)
+		if i < len(eventTypeList) {
+			eventType = eventTypeList[i]
+		}
+		eventData := []byte(fmt.Sprintf("TestEventData %d", i+1))
+		if i < len(eventDataList) {
+			eventData = eventDataList[i]
+		}
+
+		event := eventsource.Record{
+			AggregateID: aggID,
+			UserID:      userID.String(),
+			SequenceID:  eventsource.NewULID(),
+			Type:        eventType,
+			Timestamp:   time.Now().UnixNano(),
+			Data:        eventData,
+		}
+
+		ctx := context.Background()
+
+		var tx eventsource.StoreTransaction
+		if tx, err = store.NewTransaction(ctx, event); err != nil {
+			return
+		}
+
+		if err = tx.Commit(); err != nil {
+			return
+		}
+
+		var records []eventsource.Record
+		records, err = store.LoadByAggregate(ctx, aggID)
+		if err != nil {
+			return
+		}
+		if len(records) != len(result[aggID])+1 {
+			err = fmt.Errorf("Expected %v result from store, got %d", len(result[aggID])+1, len(records))
+			return
+		}
+		event.SequenceID = records[len(records)-1].SequenceID
+		if !reflect.DeepEqual(event, records[len(records)-1]) {
+			err = fmt.Errorf("Expected identical records, saved: %v  loaded: %v", event, records[len(records)-1])
+			return
+		}
+
+		result[aggID] = records
+	}
+	return result, err
+}
+
 // createTestEvents - create some random test events in sequence
 func createTestEvents(db *sql.DB, tableName string, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
 	result = []eventsource.Record{}

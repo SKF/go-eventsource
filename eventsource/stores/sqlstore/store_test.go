@@ -22,6 +22,49 @@ import (
 
 var ctx = context.TODO()
 
+func TestGetRecordsForAggregate(t *testing.T) {
+	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
+		t.Log("Skipping postgres e2e test")
+		t.Skip()
+	}
+
+	db, err := sql.Open("postgres", os.Getenv("POSTGRES_CONN_STRING"))
+	require.NoError(t, err, "Could not connect to db")
+	defer db.Close()
+
+	tableName, err := createTable(db)
+	require.NoError(t, err, "Could not create table")
+
+	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
+	events, err := createTestEventsForAggregates(db, tableName, 2, 20, eventTypes, [][]byte{[]byte("TestData")})
+	require.NoError(t, err, "Failed to create events")
+	defer func() {
+		//err = cleanup(db, tableName)
+		require.NoError(t, err, "Could not perform DB cleanup")
+	}()
+
+	store := New(db, tableName)
+
+	for id, testSet := range events {
+		allRec, err := store.GetRecordsForAggregate(ctx, id, "")
+		require.NoError(t, err, "Could not GetRecordsForAggregate")
+		assert.Equal(t, len(testSet), len(allRec))
+
+		if len(testSet) > 2 {
+			middleIdx := len(testSet) / 2
+			expectedRecords := make([]eventsource.Record, len(testSet)-1-middleIdx)
+			copy(expectedRecords, testSet[middleIdx+1:])
+			record := testSet[middleIdx]
+			middleRecords, err := store.GetRecordsForAggregate(ctx, id, record.SequenceID)
+			require.NoError(t, err, "Could not GetRecordsForAggregate for:"+record.SequenceID)
+
+			assert.Equal(t, len(expectedRecords), len(middleRecords))
+
+			assert.Equal(t, expectedRecords, middleRecords)
+		}
+	}
+
+}
 func TestLoadBySequenceID(t *testing.T) {
 	if testing.Short() || os.Getenv("POSTGRES_CONN_STRING") == "" {
 		t.Log("Skipping postgres e2e test")

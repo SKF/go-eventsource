@@ -36,7 +36,7 @@ func TestGetRecordsForAggregate(t *testing.T) {
 	require.NoError(t, err, "Could not create table")
 
 	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
-	events, err := createTestEventsForAggregates(db, tableName, 10000, 2000000, eventTypes, [][]byte{[]byte("TestData")})
+	events, err := createTestEventsForAggregates(db, tableName, 10, 200, eventTypes, [][]byte{[]byte("TestData")})
 	require.NoError(t, err, "Failed to create events")
 	defer func() {
 		err = cleanup(db, tableName)

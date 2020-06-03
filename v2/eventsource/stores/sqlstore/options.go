@@ -92,10 +92,6 @@ func equals(key column, value interface{}) eventsource.QueryOption {
 	return where(whereOperatorEquals, key, value)
 }
 
-func lessThan(key column, value interface{}) eventsource.QueryOption {
-	return where(whereOperatorLessThan, key, value)
-}
-
 func greaterThan(key column, value interface{}) eventsource.QueryOption {
 	return where(whereOperatorGreaterThan, key, value)
 }

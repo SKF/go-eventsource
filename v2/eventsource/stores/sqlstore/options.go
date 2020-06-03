@@ -13,20 +13,20 @@ var (
 type Column string
 
 const (
-	Column_AggregateID Column = "aggregate_id"
-	Column_SequenceID  Column = "sequence_id"
-	Column_CreatedAt   Column = "created_at"
-	Column_UserID      Column = "user_id"
-	Column_Type        Column = "type"
-	Column_Data        Column = "data"
+	ColumnAggregateID Column = "aggregate_id"
+	ColumnSequenceID  Column = "sequence_id"
+	ColumnCreatedAt   Column = "created_at"
+	ColumnUserID      Column = "user_id"
+	ColumnType        Column = "type"
+	ColumnData        Column = "data"
 )
 
 type whereOperator string
 
 const (
-	whereOperator_Equals      = "="
-	whereOperator_LessThan    = "<"
-	whereOperator_GreaterThan = ">"
+	whereOperatorEquals      = "="
+	whereOperatorLessThan    = "<"
+	whereOperatorGreaterThan = ">"
 )
 
 type whereOpt struct {
@@ -89,23 +89,23 @@ func where(operator whereOperator, key Column, value interface{}) eventsource.Qu
 }
 
 func Equals(key Column, value interface{}) eventsource.QueryOption {
-	return where(whereOperator_Equals, key, value)
+	return where(whereOperatorEquals, key, value)
 }
 
 func LessThan(key Column, value interface{}) eventsource.QueryOption {
-	return where(whereOperator_LessThan, key, value)
+	return where(whereOperatorLessThan, key, value)
 }
 
 func GreaterThan(key Column, value interface{}) eventsource.QueryOption {
-	return where(whereOperator_GreaterThan, key, value)
+	return where(whereOperatorGreaterThan, key, value)
 }
 
 func BySequenceID(value interface{}) eventsource.QueryOption {
-	return GreaterThan(Column_SequenceID, value)
+	return GreaterThan(ColumnSequenceID, value)
 }
 
 func ByType(value interface{}) eventsource.QueryOption {
-	return Equals(Column_Type, value)
+	return Equals(ColumnType, value)
 }
 
 // evaluate a list of options by extending the default options

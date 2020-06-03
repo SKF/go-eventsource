@@ -3,7 +3,7 @@ module github.com/SKF/go-eventsource
 go 1.13
 
 require (
-	github.com/SKF/go-eventsource/v2 v2.1.0 // indirect
+	github.com/SKF/go-eventsource/v2 v2.1.0
 	github.com/SKF/go-utility/v2 v2.0.1
 	github.com/aws/aws-sdk-go v1.25.49
 	github.com/lib/pq v1.0.0

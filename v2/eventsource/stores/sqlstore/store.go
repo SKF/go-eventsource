@@ -17,7 +17,7 @@ type store struct {
 }
 
 var (
-	columns = []Column{Column_AggregateID, Column_SequenceID, Column_CreatedAt, Column_UserID, Column_Type, Column_Data}
+	columns = []Column{ColumnAggregateID, ColumnSequenceID, ColumnCreatedAt, ColumnUserID, ColumnType, ColumnData}
 	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )

@@ -10,10 +10,24 @@ var (
 	}
 )
 
+type whereOperator string
+
+const (
+	whereOperator_Equals      = "="
+	whereOperator_LessThan    = "<"
+	whereOperator_GreaterThan = ">"
+)
+
+type whereOpt struct {
+	value    interface{}
+	operator whereOperator
+}
+
 type options struct {
 	limit      *int
 	offset     *int
 	descending bool
+	where      map[string]whereOpt
 }
 
 // WithLimit will limit the result
@@ -50,6 +64,29 @@ func WithAscending() eventsource.QueryOption {
 			o.descending = false
 		}
 	}
+}
+
+func where(operator WhereOperator, key string, value interface{}) eventsource.QueryOption {
+	return func(i interface{}) {
+		if o, ok := i.(*options); ok {
+			o.equals[key] = whereOpt{
+				value:    value,
+				operator: operator,
+			}
+		}
+	}
+}
+
+func Equals(key string, value interface{}) eventsource.QueryOption {
+	return where(whereOperator_Equals, key, value)
+}
+
+func LessThan(key string, value interface{}) eventsource.QueryOption {
+	return where(whereOperator_LessThan, key, value)
+}
+
+func GreaterThan(key string, value interface{}) eventsource.QueryOption {
+	return where(whereOperator_GreaterThan, key, value)
 }
 
 // evaluate a list of options by extending the default options

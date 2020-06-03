@@ -96,6 +96,24 @@ func (o StoreMock) Load(ctx context.Context, opts ...QueryOption) (record []Reco
 	return args.Get(0).([]Record), args.Error(1)
 }
 
+// LoadBySequenceID is a mock
+func (o StoreMock) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (record []Record, err error) {
+	args := o.Called(ctx, sequenceID, opts)
+	return args.Get(0).([]Record), args.Error(1)
+}
+
+// LoadBySequenceIDAndType is a mock
+func (o StoreMock) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...QueryOption) (record []Record, err error) {
+	args := o.Called(ctx, sequenceID, eventType, opts)
+	return args.Get(0).([]Record), args.Error(1)
+}
+
+// LoadByTimestamp is a mock
+func (o StoreMock) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (record []Record, err error) {
+	args := o.Called(ctx, timestamp, opts)
+	return args.Get(0).([]Record), args.Error(1)
+}
+
 // On is a mock
 func (o AggregatorMock) On(ctx context.Context, event Event) error {
 	args := o.Mock.Called(ctx, event)
@@ -144,6 +162,24 @@ func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (de
 // LoadEvents is a mock
 func (r RepositoryMock) LoadEvents(ctx context.Context, opts ...QueryOption) ([]Event, error) {
 	args := r.Called(ctx, opts)
+	return args.Get(0).([]Event), args.Error(1)
+}
+
+// GetEventsBySequenceID is a mock
+func (r RepositoryMock) GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) ([]Event, error) {
+	args := r.Called(ctx, sequenceID, opts)
+	return args.Get(0).([]Event), args.Error(1)
+}
+
+// GetEventsBySequenceIDAndType is a mock
+func (r RepositoryMock) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) ([]Event, error) {
+	args := r.Called(ctx, sequenceID, eventType, opts)
+	return args.Get(0).([]Event), args.Error(1)
+}
+
+// GetEventsByTimestamp is a mock
+func (r RepositoryMock) GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) ([]Event, error) {
+	args := r.Called(ctx, timestamp, opts)
 	return args.Get(0).([]Event), args.Error(1)
 }
 

@@ -27,6 +27,15 @@ type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
 	LoadByAggregate(ctx context.Context, aggregateID string, opts ...QueryOption) ([]Record, error)
 	Load(ctx context.Context, opts ...QueryOption) ([]Record, error)
+
+	// Deprecated
+	LoadBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (record []Record, err error)
+
+	// Deprecated
+	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...QueryOption) (records []Record, err error)
+
+	// Deprecated
+	LoadByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (record []Record, err error)
 }
 
 // StoreTransaction encapsulates a write operation to a Store, allowing the caller
@@ -75,6 +84,18 @@ type Repository interface {
 	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
 	LoadEvents(ctx context.Context, opts ...QueryOption) (events []Event, err error)
+
+	// Deprecated: Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
+	// Return at most limit records. If limit is 0, don't limit the number of records returned.
+	GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (events []Event, err error)
+
+	// Deprecated: Same as GetEventsBySequenceID, but only returns events of the same type
+	// as the one provided in the eventType parameter.
+	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) (events []Event, err error)
+
+	// Deprecated: Get all events newer than the given timestamp
+	// Return at most limit records. If limit is 0, don't limit the number of records returned.
+	GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error)
 
 	// Add notification service
 	AddNotificationService(service NotificationService)
@@ -259,6 +280,33 @@ func unmarshalRecords(serializer Serializer, records []Record) (events []Event, 
 func (repo repository) LoadEvents(ctx context.Context, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
 	if records, err = repo.store.Load(ctx, opts...); err != nil {
+		return
+	}
+	return unmarshalRecords(repo.serializer, records)
+}
+
+// Deprecated
+func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (events []Event, err error) {
+	var records []Record
+	if records, err = repo.store.LoadBySequenceID(ctx, sequenceID, opts...); err != nil {
+		return
+	}
+	return unmarshalRecords(repo.serializer, records)
+}
+
+// Deprecated
+func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) (events []Event, err error) {
+	var records []Record
+	if records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, GetTypeName(eventType), opts...); err != nil {
+		return
+	}
+	return unmarshalRecords(repo.serializer, records)
+}
+
+// Deprecated
+func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error) {
+	var records []Record
+	if records, err = repo.store.LoadByTimestamp(ctx, timestamp, opts...); err != nil {
 		return
 	}
 	return unmarshalRecords(repo.serializer, records)

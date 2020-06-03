@@ -53,3 +53,18 @@ func (mem *store) loadRecords(opts []eventsource.QueryOption) (records []eventso
 	}
 	return
 }
+
+// Deprecated
+func (mem *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return mem.Load(ctx, append(opts, BySequenceID(sequenceID))...)
+}
+
+// Deprecated
+func (mem *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return mem.Load(ctx, append(opts, BySequenceID(sequenceID), ByType(eventType))...)
+}
+
+// Deprecated
+func (mem *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return mem.Load(ctx, append(opts, ByTimestamp(timestamp))...)
+}

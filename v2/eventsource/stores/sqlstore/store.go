@@ -17,7 +17,7 @@ type store struct {
 }
 
 var (
-	columns = []Column{ColumnAggregateID, ColumnSequenceID, ColumnCreatedAt, ColumnUserID, ColumnType, ColumnData}
+	columns = []column{columnAggregateID, columnSequenceID, columnCreatedAt, columnUserID, columnType, columnData}
 	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )
@@ -30,7 +30,7 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-func columnExist(key Column) bool {
+func columnExist(key column) bool {
 	for _, column := range columns {
 		if key == column {
 			return true
@@ -50,7 +50,7 @@ func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string
 
 	for key, data := range opts.where {
 		if !columnExist(key) {
-			err = errors.Errorf("Column '%s' cannot be applied to", key)
+			err = errors.Errorf("column '%s' cannot be applied to", key)
 			return
 		}
 		args = append(args, data.value)
@@ -126,5 +126,20 @@ func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (
 }
 
 func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.Load(ctx, append(opts, Equals("aggregate_id", aggregateID))...)
+	return store.Load(ctx, append(opts, equals("aggregate_id", aggregateID))...)
+}
+
+// Deprecated
+func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.Load(ctx, append(opts, BySequenceID(sequenceID))...)
+}
+
+// Deprecated
+func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.Load(ctx, append(opts, BySequenceID(sequenceID), ByType(eventType))...)
+}
+
+// Deprecated
+func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.Load(ctx, append(opts, ByTimestamp(timestamp))...)
 }

@@ -16,7 +16,7 @@ type store struct {
 	tablename string
 }
 
-const (
+var (
 	columns = []string{"aggregate_id", "sequence_id", "created_at", "user_id", "type", "data"}
 	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
@@ -76,7 +76,11 @@ func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string
 }
 
 func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.QueryOption, query string) (records []eventsource.Record, err error) {
-	fullQuery, args := store.buildQuery(queryOpts, query)
+	fullQuery, args, err := store.buildQuery(queryOpts, query)
+	if err != nil {
+		return
+	}
+
 	stmt, err := store.db.PrepareContext(ctx, fullQuery)
 	if err != nil {
 		err = errors.Wrap(err, "failed to prepare sql query")

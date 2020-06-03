@@ -66,10 +66,10 @@ func WithAscending() eventsource.QueryOption {
 	}
 }
 
-func where(operator WhereOperator, key string, value interface{}) eventsource.QueryOption {
+func where(operator whereOperator, key string, value interface{}) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
-			o.equals[key] = whereOpt{
+			o.where[key] = whereOpt{
 				value:    value,
 				operator: operator,
 			}

@@ -17,7 +17,7 @@ type store struct {
 }
 
 var (
-	columns = []string{"aggregate_id", "sequence_id", "created_at", "user_id", "type", "data"}
+	columns = []Column{Column_AggregateID, Column_SequenceID, Column_CreatedAt, Column_UserID, Column_Type, Column_Data}
 	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )
@@ -30,7 +30,7 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-func columnExist(key string) bool {
+func columnExist(key Column) bool {
 	for _, column := range columns {
 		if key == column {
 			return true
@@ -125,19 +125,6 @@ func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (
 	return store.fetchRecords(ctx, opts, loadSQL)
 }
 
-// Deprecated functions
 func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.Load(ctx, append(opts, Equals("aggregate_id", aggregateID))...)
-}
-
-func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.Load(ctx, append(opts, GreaterThan("sequence_id", sequenceID))...)
-}
-
-func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.Load(ctx, append(opts, GreaterThan("sequence_id", sequenceID), Equals("type", eventType))...)
-}
-
-func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.Load(ctx, append(opts, GreaterThan("created_at", timestamp))...)
 }

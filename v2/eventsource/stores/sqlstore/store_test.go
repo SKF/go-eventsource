@@ -90,24 +90,24 @@ func TestLoadBySequenceID(t *testing.T) {
 	var records []eventsource.Record
 
 	store := New(db, tableName)
-	records, err = store.LoadBySequenceID(ctx, events[0].SequenceID)
-	assert.NoError(t, err, "LoadBySequenceID failed")
+	records, err = store.Load(ctx, BySequenceID(events[0].SequenceID))
+	assert.NoError(t, err, "Load failed")
 	assert.Equal(t, 9, len(records))
 
-	records, err = store.LoadBySequenceID(ctx, events[len(events)-2].SequenceID)
-	assert.NoError(t, err, "LoadBySequenceID failed")
+	records, err = store.Load(ctx, BySequenceID(events[len(events)-2].SequenceID))
+	assert.NoError(t, err, "Load failed")
 	assert.Equal(t, 1, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(ctx, events[0].SequenceID, "EventTypeA")
-	assert.NoError(t, err, "LoadBySequenceID failed")
+	records, err = store.Load(ctx, BySequenceID(events[0].SequenceID), ByType("EventTypeA"))
+	assert.NoError(t, err, "Load failed")
 	assert.Equal(t, 2, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA")
-	assert.NoError(t, err, "LoadBySequenceID failed")
+	records, err = store.Load(ctx, BySequenceID(""), ByType("EventTypeA"))
+	assert.NoError(t, err, "Load failed")
 	assert.Equal(t, 3, len(records))
 
-	records, err = store.LoadBySequenceIDAndType(ctx, "", "EventTypeA", WithLimit(1))
-	assert.NoError(t, err, "LoadBySequenceID failed")
+	records, err = store.Load(ctx, BySequenceID(""), ByType("EventTypeA"), WithLimit(1))
+	assert.NoError(t, err, "Load failed")
 	assert.Equal(t, 1, len(records))
 }
 
@@ -156,11 +156,11 @@ func Test_SQLStoreE2E(t *testing.T) {
 	assert.Equal(t, "abcd", testObject.FieldA)
 	assert.Equal(t, 10, testObject.FieldB)
 
-	events, err := repo.GetEventsBySequenceID(ctx, "")
+	events, err := repo.LoadEvents(ctx, BySequenceID(""))
 	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 8, len(events))
 
-	events, err = repo.GetEventsBySequenceID(ctx, events[len(events)-2].GetSequenceID())
+	events, err = repo.LoadEvents(ctx, BySequenceID(events[len(events)-2].GetSequenceID()))
 	assert.NoError(t, err, "Could not get events")
 	assert.Equal(t, 1, len(events))
 }
@@ -191,14 +191,14 @@ func Test_SQLStoreOptions(t *testing.T) {
 		assert.NoError(t, err, "Could not save event to DB")
 	}
 
-	events, err := repo.GetEventsBySequenceID(ctx, "", WithAscending())
+	events, err := repo.LoadEvents(ctx, BySequenceID(""), WithAscending())
 	assert.NoError(t, err, "Could not get events")
 	require.Equal(t, len(testData), len(events))
 	assert.Equal(t, testData[0].Position, events[0].(TestEventPosition).Position)
 	assert.Equal(t, testData[testSize-4].Position, events[testSize-4].(TestEventPosition).Position)
 	assert.Equal(t, testData[testSize-1].Position, events[testSize-1].(TestEventPosition).Position)
 
-	events, err = repo.GetEventsBySequenceID(ctx, "", WithDescending())
+	events, err = repo.LoadEvents(ctx, BySequenceID(""), WithDescending())
 	assert.NoError(t, err, "Could not get events")
 	require.Equal(t, len(testData), len(events))
 	assert.Equal(t, testData[testSize-1].Position, events[0].(TestEventPosition).Position)
@@ -209,7 +209,7 @@ func Test_SQLStoreOptions(t *testing.T) {
 		limit  = 5
 		offset = 1
 	)
-	events, err = repo.GetEventsBySequenceID(ctx, "", WithOffset(offset), WithLimit(limit))
+	events, err = repo.LoadEvents(ctx, BySequenceID(""), WithOffset(offset), WithLimit(limit))
 	assert.NoError(t, err, "Could not get events")
 	require.Equal(t, limit, len(events))
 	assert.Equal(t, testData[offset].Position, events[0].(TestEventPosition).Position)

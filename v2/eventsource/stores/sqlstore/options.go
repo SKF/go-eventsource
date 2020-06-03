@@ -10,6 +10,17 @@ var (
 	}
 )
 
+type Column string
+
+const (
+	Column_AggregateID Column = "aggregate_id"
+	Column_SequenceID  Column = "sequence_id"
+	Column_CreatedAt   Column = "created_at"
+	Column_UserID      Column = "user_id"
+	Column_Type        Column = "type"
+	Column_Data        Column = "data"
+)
+
 type whereOperator string
 
 const (
@@ -27,7 +38,7 @@ type options struct {
 	limit      *int
 	offset     *int
 	descending bool
-	where      map[string]whereOpt
+	where      map[Column]whereOpt
 }
 
 // WithLimit will limit the result
@@ -66,7 +77,7 @@ func WithAscending() eventsource.QueryOption {
 	}
 }
 
-func where(operator whereOperator, key string, value interface{}) eventsource.QueryOption {
+func where(operator whereOperator, key Column, value interface{}) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
 			o.where[key] = whereOpt{
@@ -77,16 +88,24 @@ func where(operator whereOperator, key string, value interface{}) eventsource.Qu
 	}
 }
 
-func Equals(key string, value interface{}) eventsource.QueryOption {
+func Equals(key Column, value interface{}) eventsource.QueryOption {
 	return where(whereOperator_Equals, key, value)
 }
 
-func LessThan(key string, value interface{}) eventsource.QueryOption {
+func LessThan(key Column, value interface{}) eventsource.QueryOption {
 	return where(whereOperator_LessThan, key, value)
 }
 
-func GreaterThan(key string, value interface{}) eventsource.QueryOption {
+func GreaterThan(key Column, value interface{}) eventsource.QueryOption {
 	return where(whereOperator_GreaterThan, key, value)
+}
+
+func BySequenceID(value interface{}) eventsource.QueryOption {
+	return GreaterThan(Column_SequenceID, value)
+}
+
+func ByType(value interface{}) eventsource.QueryOption {
+	return Equals(Column_Type, value)
 }
 
 // evaluate a list of options by extending the default options

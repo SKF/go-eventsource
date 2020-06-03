@@ -26,17 +26,10 @@ type Repository interface {
 	// "fast forwarded" to the current state.
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 
-	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
+	// Get all events
 	// Use store specific query options to either limit or sort the events
-	GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOptions) (events []Event, err error)
-
-	// Same as GetEventsBySequenceID, but only returns events of the same type
-	// as the one provided in the eventType parameter.
-	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOptions) (events []Event, err error)
-
-	// Get all events newer than the given timestamp
-	// Use store specific query options to either limit or sort the events
-	GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOptions) (events []Event, err error)
+	// or filters for sequence ID to get newer than the given ID (see https://github.com/oklog/ulid)
+	LoadEvents(ctx context.Context, opts ...QueryOptions) (events []Event, err error)
 }
 ```
 
@@ -60,9 +53,7 @@ type CallOptions func(i interface{})
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
 	LoadByAggregate(ctx context.Context, aggregateID string, opts ...QueryOptions) (record []Record, err error)
-	LoadBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOptions) (record []Record, err error)
-	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...QueryOptions) (records []Record, err error)
-	LoadByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOptions) (record []Record, err error)
+	Load(ctx context.Context, opts ...QueryOptions) (record []Record, err error)
 }
 
 type StoreTransaction interface {

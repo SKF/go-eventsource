@@ -25,7 +25,6 @@ type whereOperator string
 
 const (
 	whereOperatorEquals      = "="
-	whereOperatorLessThan    = "<"
 	whereOperatorGreaterThan = ">"
 )
 

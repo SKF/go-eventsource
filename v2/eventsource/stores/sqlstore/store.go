@@ -126,7 +126,7 @@ func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (
 }
 
 func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.Load(ctx, append(opts, equals("aggregate_id", aggregateID))...)
+	return store.Load(ctx, append(opts, equals(columnAggregateID, aggregateID))...)
 }
 
 // Deprecated

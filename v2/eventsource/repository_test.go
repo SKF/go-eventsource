@@ -79,7 +79,7 @@ func Test_RepoGetRecords(t *testing.T) {
 	otherEvent := &OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
 
 	ctx := context.TODO()
-	storeMock.On("LoadEvents", ctx, []QueryOption(nil)).Return(filterHistoryBySeqID(history, "2"), nil)
+	storeMock.On("Load", ctx, []QueryOption(nil)).Return(filterHistoryBySeqID(history, "2"), nil)
 	serializerMock.On("Unmarshal", []byte{byte(1)}, "BaseEvent").Return(baseEvent, nil)
 	serializerMock.On("Unmarshal", []byte{byte(3)}, "OtherEvent").Return(otherEvent, nil)
 

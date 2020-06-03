@@ -18,6 +18,10 @@ func New() eventsource.Store {
 }
 
 // Load ...
+func (mem *store) Load(_ context.Context, opts ...eventsource.QueryOption) ([]eventsource.Record, error) {
+	return mem.loadRecords(opts)
+}
+
 func (mem *store) LoadByAggregate(_ context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	if rows, ok := mem.Data[aggregateID]; ok {
 		return rows, nil
@@ -25,7 +29,7 @@ func (mem *store) LoadByAggregate(_ context.Context, aggregateID string, opts ..
 	return records, nil
 }
 
-func (mem *store) loadRecords(opts []eventsource.QueryOption, includeRecord func(eventsource.Record) bool) (records []eventsource.Record, err error) {
+func (mem *store) loadRecords(opts []eventsource.QueryOption) (records []eventsource.Record, err error) {
 	queryOpts := evaluateQueryOptions(opts)
 
 	var recordSlice []eventsource.Record
@@ -34,30 +38,18 @@ func (mem *store) loadRecords(opts []eventsource.QueryOption, includeRecord func
 	}
 	queryOpts.sorter(recordSlice)
 	for _, record := range recordSlice {
-		if includeRecord(record) {
+		filterResult := true
+		for _, filter := range queryOpts.filters {
+			filterResult = filterResult && filter(record)
+		}
+
+		if filterResult {
 			records = append(records, record)
 		}
+
 		if queryOpts.limit != nil && len(records) >= *queryOpts.limit {
 			return
 		}
 	}
 	return
-}
-
-func (mem *store) LoadBySequenceID(_ context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return mem.loadRecords(opts, func(record eventsource.Record) (include bool) {
-		return record.SequenceID > sequenceID
-	})
-}
-
-func (mem *store) LoadBySequenceIDAndType(_ context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return mem.loadRecords(opts, func(record eventsource.Record) (include bool) {
-		return record.SequenceID > sequenceID && record.Type == eventType
-	})
-}
-
-func (mem *store) LoadByTimestamp(_ context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return mem.loadRecords(opts, func(record eventsource.Record) (include bool) {
-		return record.Timestamp > timestamp
-	})
 }

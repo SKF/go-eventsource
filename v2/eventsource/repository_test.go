@@ -46,15 +46,6 @@ func filterHistoryBySeqID(history []Record, sequenceID string) (filtered []Recor
 	return
 }
 
-func filterHistoryBySeqIDAndType(history []Record, sequenceID string, eventType string) (filtered []Record) {
-	for _, record := range history {
-		if record.SequenceID > sequenceID && record.Type == eventType {
-			filtered = append(filtered, record)
-		}
-	}
-	return
-}
-
 type OtherEvent struct {
 	*BaseEvent
 	OtherEventField int

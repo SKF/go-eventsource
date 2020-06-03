@@ -72,7 +72,7 @@ func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string
 	}
 
 	returnedQuery = strings.Join(fullQuery, " ")
-	return
+	return returnedQuery, args, nil
 }
 
 func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.QueryOption, query string) (records []eventsource.Record, err error) {

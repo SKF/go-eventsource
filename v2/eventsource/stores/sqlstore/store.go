@@ -22,7 +22,7 @@ var (
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )
 
-// New ...
+// New creates a new event source store
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
 		db:        db,
@@ -120,7 +120,7 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 	return records, err
 }
 
-// Load ...
+// Load will load records based on specified query options
 func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.fetchRecords(ctx, opts, loadSQL)
 }

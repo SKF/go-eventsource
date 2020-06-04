@@ -17,7 +17,7 @@ func New() eventsource.Store {
 	}
 }
 
-// Load ...
+// Load will load records based on specified query options
 func (mem *store) Load(_ context.Context, opts ...eventsource.QueryOption) ([]eventsource.Record, error) {
 	return mem.loadRecords(opts)
 }

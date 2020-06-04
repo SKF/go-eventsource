@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DataDog/datadog-go v2.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616/go.mod h1:gMGUEe16aZh0QN941HgDjwrdjU4iTthPoz2/AtDRADE=
+github.com/SKF/go-eventsource/v2 v2.1.0 h1:nOo1P5O8xs4JEtOF2rtQnzsxIdq22r5v5ZFt2b/u6do=
+github.com/SKF/go-eventsource/v2 v2.1.0/go.mod h1:tzcYhiwLZiCNueoyn04OzajSYwSOwadrLgVtyANYu6w=
 github.com/SKF/go-utility/v2 v2.0.1 h1:Kds4tAMKFuMtfzcmoj63XNNUztmZzorRopaDxnKuOSE=
 github.com/SKF/go-utility/v2 v2.0.1/go.mod h1:PweUWJgg67c9AYV/OInVGRdVh5gmLc0hZX/fXWCp1YI=
 github.com/SKF/proto v1.21.0-go/go.mod h1:fLZMzpComrKyD9V74fS1lT4ryHZX9LlYYjM1TmBZw+s=

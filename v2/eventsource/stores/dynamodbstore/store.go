@@ -18,7 +18,7 @@ type store struct {
 	consistentRead bool
 }
 
-// New ...
+// New creates a new event source store
 func New(db *dynamodb.DynamoDB, tableName string) eventsource.Store {
 	return &store{
 		db:             db,
@@ -63,7 +63,7 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 	return records, err
 }
 
-// Load ...
+// Load will load records based on specified query options
 func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
 	log.Error(err.Error())

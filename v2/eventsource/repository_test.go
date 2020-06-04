@@ -46,15 +46,6 @@ func filterHistoryBySeqID(history []Record, sequenceID string) (filtered []Recor
 	return
 }
 
-func filterHistoryBySeqIDAndType(history []Record, sequenceID string, eventType string) (filtered []Record) {
-	for _, record := range history {
-		if record.SequenceID > sequenceID && record.Type == eventType {
-			filtered = append(filtered, record)
-		}
-	}
-	return
-}
-
 type OtherEvent struct {
 	*BaseEvent
 	OtherEventField int
@@ -88,12 +79,12 @@ func Test_RepoGetRecords(t *testing.T) {
 	otherEvent := &OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
 
 	ctx := context.TODO()
-	storeMock.On("LoadBySequenceID", ctx, "2", []QueryOption(nil)).Return(filterHistoryBySeqID(history, "2"), nil)
+	storeMock.On("Load", ctx, []QueryOption(nil)).Return(filterHistoryBySeqID(history, "2"), nil)
 	serializerMock.On("Unmarshal", []byte{byte(1)}, "BaseEvent").Return(baseEvent, nil)
 	serializerMock.On("Unmarshal", []byte{byte(3)}, "OtherEvent").Return(otherEvent, nil)
 
 	repo := NewRepository(storeMock, serializerMock)
-	records, err := repo.GetEventsBySequenceID(ctx, "2")
+	records, err := repo.LoadEvents(ctx)
 
 	aggregatorMock.Mock.AssertExpectations(t)
 	serializerMock.AssertExpectations(t)
@@ -102,27 +93,6 @@ func Test_RepoGetRecords(t *testing.T) {
 	assert.Equal(t, len(records), 2)
 	assert.Equal(t, records[0].(*BaseEvent), baseEvent, true)
 	assert.Equal(t, records[1].(*OtherEvent), otherEvent, true)
-}
-
-func Test_RepoGetRecordsByType(t *testing.T) {
-	storeMock, _, serializerMock, aggregatorMock := setupMocks()
-
-	history, baseEvent, _ := createMockDataForLoadAggregate()
-	otherEvent := &OtherEvent{BaseEvent: baseEvent, OtherEventField: 42}
-
-	ctx := context.TODO()
-	storeMock.On("LoadBySequenceIDAndType", ctx, "2", "OtherEvent", []QueryOption(nil)).Return(filterHistoryBySeqIDAndType(history, "2", "OtherEvent"), nil)
-	serializerMock.On("Unmarshal", []byte{byte(3)}, "OtherEvent").Return(otherEvent, nil)
-
-	repo := NewRepository(storeMock, serializerMock)
-	records, err := repo.GetEventsBySequenceIDAndType(ctx, "2", OtherEvent{})
-
-	aggregatorMock.Mock.AssertExpectations(t)
-	serializerMock.AssertExpectations(t)
-	storeMock.AssertExpectations(t)
-	assert.Nil(t, err)
-	assert.Equal(t, len(records), 1)
-	assert.Equal(t, records[0].(*OtherEvent), otherEvent, true)
 }
 
 func Test_RepoLoadSuccess(t *testing.T) {

@@ -18,7 +18,7 @@ type store struct {
 	consistentRead bool
 }
 
-// New ...
+// New creates a new event source store
 func New(db *dynamodb.DynamoDB, tableName string) eventsource.Store {
 	return &store{
 		db:             db,
@@ -63,21 +63,28 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 	return records, err
 }
 
-// LoadBySequenceID ...
+// Load will load records based on specified query options
+func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	err = errors.New("operation not supported on DynamoDB")
+	log.Error(err.Error())
+	return
+}
+
+// Deprecated
 func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return
 }
 
-// LoadBySequenceIDAndType ...
+// Deprecated
 func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
 	log.Error(err.Error())
 	return
 }
 
-// LoadByTimestamp
+// Deprecated
 func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
 	log.Error(err.Error())

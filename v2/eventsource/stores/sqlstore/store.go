@@ -16,15 +16,13 @@ type store struct {
 	tablename string
 }
 
-const (
-	saveSQL                    = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
-	loadAggregateSQL           = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE aggregate_id = $1"
-	loadBySequenceIDSQL        = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1"
-	loadBySequenceIDAndTypeSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE sequence_id > $1 AND type = $2"
-	loadByTimestampSQL         = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s WHERE created_at > $1"
+var (
+	columns = []column{columnAggregateID, columnSequenceID, columnCreatedAt, columnUserID, columnType, columnData}
+	saveSQL = "INSERT INTO %s (aggregate_id, sequence_id, created_at, user_id, type, data) VALUES ($1, $2, $3, $4, $5, $6)"
+	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )
 
-// New ...
+// New creates a new event source store
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
 		db:        db,
@@ -32,9 +30,32 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string) string {
+func columnExist(key column) bool {
+	for _, column := range columns {
+		if key == column {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (returnedQuery string, args []interface{}, err error) {
 	fullQuery := []string{fmt.Sprintf(query, store.tablename)}
 	opts := evaluateQueryOptions(queryOpts)
+
+	if len(opts.where) > 0 {
+		fullQuery = append(fullQuery, "WHERE")
+	}
+
+	for key, data := range opts.where {
+		if !columnExist(key) {
+			err = errors.Errorf("column '%s' cannot be applied to", key)
+			return
+		}
+		args = append(args, data.value)
+		fullQuery = append(fullQuery, fmt.Sprintf("%s %s $%d", key, data.operator, len(args)))
+	}
 
 	if opts.descending {
 		fullQuery = append(fullQuery, "ORDER BY sequence_id DESC")
@@ -50,11 +71,16 @@ func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string
 		fullQuery = append(fullQuery, fmt.Sprintf("OFFSET %d", *opts.offset))
 	}
 
-	return strings.Join(fullQuery, " ")
+	returnedQuery = strings.Join(fullQuery, " ")
+	return returnedQuery, args, nil
 }
 
-func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.QueryOption, query string, args ...interface{}) (records []eventsource.Record, err error) {
-	fullQuery := store.buildQuery(queryOpts, query)
+func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.QueryOption, query string) (records []eventsource.Record, err error) {
+	fullQuery, args, err := store.buildQuery(queryOpts, query)
+	if err != nil {
+		return
+	}
+
 	stmt, err := store.db.PrepareContext(ctx, fullQuery)
 	if err != nil {
 		err = errors.Wrap(err, "failed to prepare sql query")
@@ -94,19 +120,26 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 	return records, err
 }
 
-// Load ...
+// Load will load records based on specified query options
+func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	return store.fetchRecords(ctx, opts, loadSQL)
+}
+
 func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, opts, loadAggregateSQL, aggregateID)
+	return store.Load(ctx, append(opts, equals(columnAggregateID, aggregateID))...)
 }
 
+// Deprecated
 func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, opts, loadBySequenceIDSQL, sequenceID)
+	return store.Load(ctx, append(opts, BySequenceID(sequenceID))...)
 }
 
+// Deprecated
 func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, opts, loadBySequenceIDAndTypeSQL, sequenceID, eventType)
+	return store.Load(ctx, append(opts, BySequenceID(sequenceID), ByType(eventType))...)
 }
 
+// Deprecated
 func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
-	return store.fetchRecords(ctx, opts, loadByTimestampSQL, timestamp)
+	return store.Load(ctx, append(opts, ByTimestamp(timestamp))...)
 }

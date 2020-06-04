@@ -25,9 +25,16 @@ type QueryOption func(opt interface{})
 // the event source.
 type Store interface {
 	NewTransaction(ctx context.Context, records ...Record) (StoreTransaction, error)
-	LoadByAggregate(ctx context.Context, aggregateID string, opts ...QueryOption) (record []Record, err error)
+	LoadByAggregate(ctx context.Context, aggregateID string, opts ...QueryOption) ([]Record, error)
+	Load(ctx context.Context, opts ...QueryOption) ([]Record, error)
+
+	// Deprecated: Use Load(ctx, store.BySequenceID(...))
 	LoadBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (record []Record, err error)
+
+	// Deprecated: Use Load(ctx, store.BySequenceID(...), store.ByType(...))
 	LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...QueryOption) (records []Record, err error)
+
+	// Deprecated: Use Load(ctx, store.ByTimestamp(...))
 	LoadByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (record []Record, err error)
 }
 
@@ -74,14 +81,22 @@ type Repository interface {
 	// "fast forwarded" to the current state.
 	Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error)
 
+	// Get all events with query options (definied in the store)
+	// Query options can be used for filter by sequence ID (see https://github.com/oklog/ulid)
+	// or options like limit, offset
+	LoadEvents(ctx context.Context, opts ...QueryOption) (events []Event, err error)
+
+	// Deprecated: Use LoadEvents(ctx, store.BySequenceId(...))
 	// Get all events with sequence ID newer than the given ID (see https://github.com/oklog/ulid)
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
 	GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (events []Event, err error)
 
+	// Deprecated: Use LoadEvents(ctx, store.BySequenceId(...), store.ByType(...))
 	// Same as GetEventsBySequenceID, but only returns events of the same type
 	// as the one provided in the eventType parameter.
 	GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) (events []Event, err error)
 
+	// Deprecated: Use LoadEvents(ctx, store.ByTimestamp(...))
 	// Get all events newer than the given timestamp
 	// Return at most limit records. If limit is 0, don't limit the number of records returned.
 	GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error)
@@ -266,6 +281,15 @@ func unmarshalRecords(serializer Serializer, records []Record) (events []Event, 
 	return
 }
 
+func (repo repository) LoadEvents(ctx context.Context, opts ...QueryOption) (events []Event, err error) {
+	var records []Record
+	if records, err = repo.store.Load(ctx, opts...); err != nil {
+		return
+	}
+	return unmarshalRecords(repo.serializer, records)
+}
+
+// Deprecated
 func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
 	if records, err = repo.store.LoadBySequenceID(ctx, sequenceID, opts...); err != nil {
@@ -274,6 +298,7 @@ func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID str
 	return unmarshalRecords(repo.serializer, records)
 }
 
+// Deprecated
 func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
 	if records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, GetTypeName(eventType), opts...); err != nil {
@@ -282,6 +307,7 @@ func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenc
 	return unmarshalRecords(repo.serializer, records)
 }
 
+// Deprecated
 func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
 	if records, err = repo.store.LoadByTimestamp(ctx, timestamp, opts...); err != nil {

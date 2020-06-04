@@ -25,19 +25,19 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	err = tx.Commit()
 	require.NoError(t, err)
 
-	records, err := store.LoadBySequenceID(ctx, "1")
+	records, err := store.Load(ctx, BySequenceID("1"))
 	require.NoError(t, err)
 	assert.Len(t, records, 3)
 	assert.Equal(t, records[0].SequenceID, "2")
 	assert.Equal(t, records[1].SequenceID, "3")
 	assert.Equal(t, records[2].SequenceID, "4")
 
-	records, err = store.LoadBySequenceID(ctx, "1", WithLimit(1))
+	records, err = store.Load(ctx, BySequenceID("1"), WithLimit(1))
 	require.NoError(t, err)
 	assert.Len(t, records, 1)
 	assert.Equal(t, records[0].SequenceID, "2")
 
-	records, err = store.LoadBySequenceIDAndType(ctx, "1", "TestEventA")
+	records, err = store.Load(ctx, BySequenceID("1"), ByType("TestEventA"))
 	require.NoError(t, err)
 	assert.Len(t, records, 2)
 	assert.Equal(t, records[0].SequenceID, "3")

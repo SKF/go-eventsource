@@ -91,6 +91,12 @@ func (o StoreMock) LoadByAggregate(ctx context.Context, aggregateID string, opts
 }
 
 // LoadBySequenceID is a mock
+func (o StoreMock) Load(ctx context.Context, opts ...QueryOption) (record []Record, err error) {
+	args := o.Called(ctx, opts)
+	return args.Get(0).([]Record), args.Error(1)
+}
+
+// LoadBySequenceID is a mock
 func (o StoreMock) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (record []Record, err error) {
 	args := o.Called(ctx, sequenceID, opts)
 	return args.Get(0).([]Record), args.Error(1)
@@ -151,6 +157,12 @@ func (r RepositoryMock) SaveTransaction(ctx context.Context, events ...Event) (S
 func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (deleted bool, err error) {
 	args := r.Called(ctx, id, aggr)
 	return args.Bool(0), args.Error(1)
+}
+
+// LoadEvents is a mock
+func (r RepositoryMock) LoadEvents(ctx context.Context, opts ...QueryOption) ([]Event, error) {
+	args := r.Called(ctx, opts)
+	return args.Get(0).([]Event), args.Error(1)
 }
 
 // GetEventsBySequenceID is a mock

@@ -283,6 +283,11 @@ func unmarshalRecords(serializer Serializer, records []Record) (events []Event, 
 			err = errors.Wrap(err, "failed to unmarshal record")
 			return
 		}
+		// Some older events created with earlier releases did not have timestamp in
+		// record.Data so in those cases we pick up timestamp from event
+		if event.GetTimestamp() == int64(0) {
+			event.SetTimestamp(record.Timestamp)
+		}
 		events = append(events, event)
 	}
 	return

@@ -51,6 +51,9 @@ ype Repository interface {
 
 	// Add notification service
 	AddNotificationService(service NotificationService)
+
+	// Unmarshal records to events
+	UnmarshalRecords(records []Record) ([]Event, error)
 }
 ```
 

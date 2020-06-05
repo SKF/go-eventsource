@@ -159,6 +159,12 @@ func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (de
 	return args.Bool(0), args.Error(1)
 }
 
+//UnmarshalRecords is a mock
+func (r RepositoryMock) UnmarshalRecords(records []Record) ([]Event, error) {
+	args := r.Called(records)
+	return args.Get(0).([]Event), args.Error(1)
+}
+
 // LoadEvents is a mock
 func (r RepositoryMock) LoadEvents(ctx context.Context, opts ...QueryOption) ([]Event, error) {
 	args := r.Called(ctx, opts)

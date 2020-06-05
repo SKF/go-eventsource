@@ -176,12 +176,6 @@ func (r RepositoryMock) SetNotificationService(ns NotificationService) {
 	r.Called(ns)
 }
 
-//UnmarshalRecords is a mock
-func (r RepositoryMock) UnmarshalRecords(records []Record) ([]Event, error) {
-	args := r.Called(records)
-	return args.Get(0).([]Event), args.Error(1)
-}
-
 type NotificationServiceMock struct {
 	*mock.Mock
 }

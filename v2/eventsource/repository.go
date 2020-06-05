@@ -103,6 +103,9 @@ type Repository interface {
 
 	// Add notification service
 	AddNotificationService(service NotificationService)
+
+	//Unmarshal records to events using repository.
+	UnmarshalRecords(records []Record) (events []Event, err error)
 }
 
 // NewRepository returns a new repository
@@ -267,6 +270,10 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 	}
 
 	return false, nil
+}
+
+func (repo repository) UnmarshalRecords(records []Record) ([]Event, error) {
+	return unmarshalRecords(repo.serializer, records)
 }
 
 func unmarshalRecords(serializer Serializer, records []Record) (events []Event, err error) {

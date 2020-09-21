@@ -38,7 +38,5 @@ linters:
     - depguard
     - gochecknoinits
     - gochecknoglobals
-    - nlreturn
     - lll
     - prealloc
-    - testpackage

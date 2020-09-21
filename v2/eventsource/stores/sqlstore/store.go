@@ -58,8 +58,8 @@ func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string
 			whereStatements = append(whereStatements, fmt.Sprintf("%s %s $%d", key, data.operator, len(args)))
 		}
 
-		whereQuery := "WHERE " + strings.Join(whereStatements, " AND ")
-		fullQuery = append(fullQuery, whereQuery)
+		whereQuery := strings.Join(whereStatements, " AND ")
+		fullQuery = append(fullQuery, "WHERE", whereQuery)
 	}
 
 	if opts.descending {

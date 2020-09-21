@@ -36,7 +36,6 @@ linters:
   enable-all: true
   disable:
     - depguard
-    - godot
     - gochecknoinits
     - gochecknoglobals
     - nlreturn

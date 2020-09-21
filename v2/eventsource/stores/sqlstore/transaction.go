@@ -11,7 +11,8 @@ import (
 )
 
 type transaction struct {
-	sqlTx *sql.Tx
+	sqlTx   *sql.Tx
+	records []eventsource.Record
 }
 
 func (store *store) NewTransaction(ctx context.Context, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
@@ -24,6 +25,7 @@ func (store *store) NewTransaction(ctx context.Context, records ...eventsource.R
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to prepare query")
 	}
+	defer stmt.Close()
 
 	for _, record := range records {
 		_, err = stmt.ExecContext(ctx, record.AggregateID, record.SequenceID, record.Timestamp, record.UserID, record.Type, record.Data)
@@ -33,7 +35,8 @@ func (store *store) NewTransaction(ctx context.Context, records ...eventsource.R
 	}
 
 	return &transaction{
-		sqlTx: tx,
+		sqlTx:   tx,
+		records: records,
 	}, nil
 }
 
@@ -50,4 +53,8 @@ func (tx *transaction) Rollback() error {
 		return errors.Wrap(err, "failed to rollback transaction")
 	}
 	return nil
+}
+
+func (tx *transaction) GetRecords() []eventsource.Record {
+	return tx.records
 }

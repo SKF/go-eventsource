@@ -46,6 +46,7 @@ func (tx *transaction) Commit() (err error) {
 
 		tx.saved = append(tx.saved, record)
 	}
+
 	return
 }
 
@@ -64,4 +65,8 @@ func (tx *transaction) Rollback() error {
 	}
 
 	return nil
+}
+
+func (tx *transaction) GetRecords() []eventsource.Record {
+	return tx.records
 }

@@ -22,7 +22,7 @@ var (
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )
 
-// New creates a new event source store
+// New creates a new event source store.
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
 		db:        db,
@@ -45,16 +45,21 @@ func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string
 	opts := evaluateQueryOptions(queryOpts)
 
 	if len(opts.where) > 0 {
-		fullQuery = append(fullQuery, "WHERE")
-	}
+		whereStatements := make([]string, 0, len(opts.where))
 
-	for key, data := range opts.where {
-		if !columnExist(key) {
-			err = errors.Errorf("column '%s' cannot be applied to", key)
-			return
+		for key, data := range opts.where {
+			if !columnExist(key) {
+				err = errors.Errorf("column '%s' cannot be applied to", key)
+
+				return
+			}
+
+			args = append(args, data.value)
+			whereStatements = append(whereStatements, fmt.Sprintf("%s %s $%d", key, data.operator, len(args)))
 		}
-		args = append(args, data.value)
-		fullQuery = append(fullQuery, fmt.Sprintf("%s %s $%d", key, data.operator, len(args)))
+
+		whereQuery := "WHERE " + strings.Join(whereStatements, " AND ")
+		fullQuery = append(fullQuery, whereQuery)
 	}
 
 	if opts.descending {
@@ -72,6 +77,7 @@ func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string
 	}
 
 	returnedQuery = strings.Join(fullQuery, " ")
+
 	return returnedQuery, args, nil
 }
 
@@ -84,8 +90,10 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 	stmt, err := store.db.PrepareContext(ctx, fullQuery)
 	if err != nil {
 		err = errors.Wrap(err, "failed to prepare sql query")
+
 		return
 	}
+
 	defer func() {
 		if errClose := stmt.Close(); errClose != nil {
 			if err != nil {
@@ -99,8 +107,11 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute sql query")
+
 		return
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var record eventsource.Record
 		if err = rows.Scan(
@@ -110,17 +121,20 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 			err = errors.Wrap(err, "failed to scan sql row")
 			return
 		}
+
 		records = append(records, record)
 	}
 
 	if err = rows.Err(); err != nil {
 		err = errors.Wrap(err, "errors returned from sql store")
+
 		return
 	}
+
 	return records, err
 }
 
-// Load will load records based on specified query options
+// Load will load records based on specified query options.
 func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.fetchRecords(ctx, opts, loadSQL)
 }

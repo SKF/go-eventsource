@@ -4,12 +4,6 @@ import (
 	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
-var (
-	defaultOptions = &options{
-		descending: false,
-	}
-)
-
 type column string
 
 const (
@@ -40,7 +34,7 @@ type options struct {
 	where      map[column]whereOpt
 }
 
-// WithLimit will limit the result
+// WithLimit will limit the result.
 func WithLimit(limit int) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -49,7 +43,7 @@ func WithLimit(limit int) eventsource.QueryOption {
 	}
 }
 
-// WithOffset will offset the result
+// WithOffset will offset the result.
 func WithOffset(offset int) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -58,7 +52,7 @@ func WithOffset(offset int) eventsource.QueryOption {
 	}
 }
 
-// WithDescending will set the sorting order to descending
+// WithDescending will set the sorting order to descending.
 func WithDescending() eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -67,7 +61,7 @@ func WithDescending() eventsource.QueryOption {
 	}
 }
 
-// WithAscending will set the sorting order to ascending
+// WithAscending will set the sorting order to ascending.
 func WithAscending() eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
@@ -107,12 +101,16 @@ func ByType(value string) eventsource.QueryOption {
 	return equals(columnType, value)
 }
 
-// evaluate a list of options by extending the default options
-func evaluateQueryOptions(opts []eventsource.QueryOption) *options {
-	copy := &options{}
-	*copy = *defaultOptions
-	for _, opt := range opts {
-		opt(copy)
+// evaluate a list of options by extending the default options.
+func evaluateQueryOptions(queryOpts []eventsource.QueryOption) *options {
+	opts := &options{
+		descending: false,
+		where:      make(map[column]whereOpt),
 	}
-	return copy
+
+	for _, opt := range queryOpts {
+		opt(opts)
+	}
+
+	return opts
 }

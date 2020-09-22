@@ -2,24 +2,23 @@ package eventsource
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"math/rand"
+	"crypto/rand"
 	"sync"
 	"time"
 
 	"github.com/oklog/ulid"
+	"github.com/pkg/errors"
 )
 
 var (
-	// ErrDeleted is returned by Aggregate.On() method to signal that the object has been deleted.
+	// ErrDeleted is returned by Aggregate.On() method to signal that the object has been deleted
 	ErrDeleted = errors.New("not found (was deleted)")
-	// ErrNoHistory is returned by Repository.Load() when no history exist for the given aggregate ID.
+	// ErrNoHistory is returned by Repository.Load() when no history exist for the given aggregate ID
 	ErrNoHistory = errors.New("no history found")
 )
 
 // QueryOption is used for setting store specific options like limit or sorting
-// Can be found in any of the stores.
+// Can be found in any of the stores
 type QueryOption func(opt interface{})
 
 // Store is the interface implemented by the data stores that can be used as back end for
@@ -62,7 +61,7 @@ type Serializer interface {
 }
 
 // NotificationService represents a service which can emit notifications
-// when records are saved to the event source.
+// when records are saved to the event source
 type NotificationService interface {
 	Send(record Record) error
 }
@@ -110,7 +109,7 @@ type Repository interface {
 	UnmarshalRecords(records []Record) (events []Event, err error)
 }
 
-// NewRepository returns a new repository.
+// NewRepository returns a new repository
 func NewRepository(store Store, serializer Serializer) Repository {
 	return &repository{
 		store:                store,
@@ -181,8 +180,7 @@ func (transWrap *transactionWrapper) GetRecords() []Record {
 
 // See https://godoc.org/github.com/oklog/ulid#example-ULID
 var (
-	// entropy = ulid.Monotonic(rand.Reader, 0)
-	entropy      = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	entropy      = ulid.Monotonic(rand.Reader, 0)
 	entropyMutex sync.Mutex
 )
 
@@ -209,10 +207,9 @@ func (repo *repository) Save(ctx context.Context, events ...Event) error {
 	if err := tx.Commit(); err != nil {
 		rollbackErr := tx.Rollback()
 		if rollbackErr != nil {
-			return fmt.Errorf("rollback error: %+v: %w", rollbackErr, err)
+			return errors.Wrapf(err, "rollback error: %+v", rollbackErr)
 		}
-
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return errors.Wrap(err, "failed to commit transaction")
 	}
 
 	return nil
@@ -272,7 +269,7 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 
 		err = aggr.On(ctx, event)
 
-		if errors.Is(err, ErrDeleted) {
+		if err == ErrDeleted {
 			return true, nil
 		}
 
@@ -293,7 +290,7 @@ func unmarshalRecords(serializer Serializer, records []Record) (events []Event, 
 		var event Event
 
 		if event, err = serializer.Unmarshal(record.Data, record.Type); err != nil {
-			err = fmt.Errorf("failed to unmarshal record: %w", err)
+			err = errors.Wrap(err, "failed to unmarshal record")
 			return
 		}
 

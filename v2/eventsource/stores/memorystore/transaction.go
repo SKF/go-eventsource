@@ -37,6 +37,7 @@ func (tx *transaction) Rollback() error {
 		id := record.AggregateID
 		if rows, ok := tx.mem.Data[id]; ok {
 			newRows := []eventsource.Record{}
+
 			for _, row := range rows {
 				if row.SequenceID != record.SequenceID {
 					newRows = append(newRows, row)
@@ -52,4 +53,8 @@ func (tx *transaction) Rollback() error {
 	}
 
 	return nil
+}
+
+func (tx *transaction) GetRecords() []eventsource.Record {
+	return tx.records
 }

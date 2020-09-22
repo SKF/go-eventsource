@@ -256,6 +256,7 @@ func Test_RepoSaveSuccessNotification(t *testing.T) {
 	storeMock.On("NewTransaction", ctx, mock.MatchedBy(func(rs []Record) bool {
 		return len(rs) == 1 && matchRecord(rs[0], testEvent, testData)
 	})).Return(storeTransactionMock, nil).Once()
+	storeTransactionMock.On("GetRecords").Return([]Record{{UserID: testEvent.UserID, AggregateID: testEvent.AggregateID, Data: testData}}).Twice()
 	storeTransactionMock.On("Commit").Return(nil).Once()
 	notificationService.On("Send", mock.MatchedBy(func(r Record) bool {
 		return matchRecord(r, testEvent, testData)

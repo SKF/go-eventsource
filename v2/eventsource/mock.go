@@ -35,7 +35,7 @@ type AggregatorMock struct {
 	Mock *mock.Mock
 }
 
-// CreateAggregatorMock returns a aggregatorMock
+// CreateAggregatorMock returns an aggregatorMock
 func CreateAggregatorMock() *AggregatorMock {
 	return &AggregatorMock{
 		Mock: &mock.Mock{},
@@ -76,6 +76,12 @@ func (o StoreTransactionMock) Commit() error {
 func (o StoreTransactionMock) Rollback() error {
 	args := o.Called()
 	return args.Error(0)
+}
+
+// GetRecords is a mock
+func (o StoreTransactionMock) GetRecords() []Record {
+	args := o.Called()
+	return args.Get(0).([]Record)
 }
 
 // NewTransaction is a mock
@@ -159,7 +165,7 @@ func (r RepositoryMock) Load(ctx context.Context, id string, aggr Aggregate) (de
 	return args.Bool(0), args.Error(1)
 }
 
-//UnmarshalRecords is a mock
+// UnmarshalRecords is a mock
 func (r RepositoryMock) UnmarshalRecords(records []Record) ([]Event, error) {
 	args := r.Called(records)
 	return args.Get(0).([]Event), args.Error(1)
@@ -210,6 +216,8 @@ func (ns NotificationServiceMock) Send(record Record) error {
 	return args.Error(0)
 }
 
-var _ Store = &StoreMock{}
-var _ Repository = &RepositoryMock{}
-var _ NotificationService = &NotificationServiceMock{}
+var (
+	_ Store               = &StoreMock{}
+	_ Repository          = &RepositoryMock{}
+	_ NotificationService = &NotificationServiceMock{}
+)

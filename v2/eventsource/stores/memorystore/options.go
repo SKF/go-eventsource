@@ -8,16 +8,14 @@ import (
 
 type FilterFunc func(record eventsource.Record) bool
 
-var (
-	defaultOptions = &options{
-		sorter: func(records []eventsource.Record) {
-			sort.Slice(records, func(i, j int) bool {
-				return records[i].SequenceID < records[j].SequenceID
-			})
-		},
-		filters: []FilterFunc{},
-	}
-)
+var defaultOptions = &options{
+	sorter: func(records []eventsource.Record) {
+		sort.Slice(records, func(i, j int) bool {
+			return records[i].SequenceID < records[j].SequenceID
+		})
+	},
+	filters: []FilterFunc{},
+}
 
 type options struct {
 	sorter  func(records []eventsource.Record)
@@ -64,8 +62,10 @@ func ByTimestamp(timestamp int64) eventsource.QueryOption {
 func evaluateQueryOptions(opts []eventsource.QueryOption) *options {
 	copy := &options{}
 	*copy = *defaultOptions
+
 	for _, opt := range opts {
 		opt(copy)
 	}
+
 	return copy
 }

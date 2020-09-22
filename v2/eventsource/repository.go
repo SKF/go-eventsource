@@ -2,7 +2,7 @@ package eventsource
 
 import (
 	"context"
-	"math/rand"
+	"crypto/rand"
 	"sync"
 	"time"
 
@@ -43,6 +43,7 @@ type Store interface {
 type StoreTransaction interface {
 	Commit() error
 	Rollback() error
+	GetRecords() []Record
 }
 
 // Aggregate is an interface representing an object whose state changes can be
@@ -104,7 +105,7 @@ type Repository interface {
 	// Add notification service
 	AddNotificationService(service NotificationService)
 
-	//Unmarshal records to events using repository.
+	// Unmarshal records to events using repository
 	UnmarshalRecords(records []Record) (events []Event, err error)
 }
 
@@ -141,7 +142,6 @@ type repository struct {
 type transactionWrapper struct {
 	transaction          StoreTransaction
 	notificationServices []NotificationService
-	records              []Record
 }
 
 func newTransactionWrapper(ctx context.Context, store Store, records []Record, ns []NotificationService) (StoreTransaction, error) {
@@ -149,7 +149,8 @@ func newTransactionWrapper(ctx context.Context, store Store, records []Record, n
 	if err != nil {
 		return nil, err
 	}
-	return &transactionWrapper{transaction, ns, records}, nil
+
+	return &transactionWrapper{transaction, ns}, nil
 }
 
 func (transWrap *transactionWrapper) Commit() error {
@@ -157,13 +158,15 @@ func (transWrap *transactionWrapper) Commit() error {
 	if err != nil {
 		return err
 	}
+
 	for _, service := range transWrap.notificationServices {
-		for _, r := range transWrap.records {
+		for _, r := range transWrap.transaction.GetRecords() {
 			if err = service.Send(r); err != nil {
 				return err
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -171,9 +174,13 @@ func (transWrap *transactionWrapper) Rollback() error {
 	return transWrap.transaction.Rollback()
 }
 
+func (transWrap *transactionWrapper) GetRecords() []Record {
+	return transWrap.transaction.GetRecords()
+}
+
 // See https://godoc.org/github.com/oklog/ulid#example-ULID
 var (
-	entropy      = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	entropy      = ulid.Monotonic(rand.Reader, 0)
 	entropyMutex sync.Mutex
 )
 
@@ -181,6 +188,7 @@ var (
 func NewULID() string {
 	entropyMutex.Lock()
 	defer entropyMutex.Unlock()
+
 	return ulid.MustNew(ulid.Now(), entropy).String()
 }
 
@@ -209,6 +217,7 @@ func (repo *repository) Save(ctx context.Context, events ...Event) error {
 
 func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (StoreTransaction, error) {
 	records := []Record{}
+
 	for _, event := range events {
 		event.SetSequenceID(NewULID())
 		event.SetTimestamp(time.Now().UnixNano())
@@ -279,46 +288,57 @@ func (repo repository) UnmarshalRecords(records []Record) ([]Event, error) {
 func unmarshalRecords(serializer Serializer, records []Record) (events []Event, err error) {
 	for _, record := range records {
 		var event Event
+
 		if event, err = serializer.Unmarshal(record.Data, record.Type); err != nil {
 			err = errors.Wrap(err, "failed to unmarshal record")
 			return
 		}
+
 		events = append(events, event)
 	}
+
 	return
 }
 
 func (repo repository) LoadEvents(ctx context.Context, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
+
 	if records, err = repo.store.Load(ctx, opts...); err != nil {
 		return
 	}
+
 	return unmarshalRecords(repo.serializer, records)
 }
 
 // Deprecated
 func (repo repository) GetEventsBySequenceID(ctx context.Context, sequenceID string, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
+
 	if records, err = repo.store.LoadBySequenceID(ctx, sequenceID, opts...); err != nil {
 		return
 	}
+
 	return unmarshalRecords(repo.serializer, records)
 }
 
 // Deprecated
 func (repo repository) GetEventsBySequenceIDAndType(ctx context.Context, sequenceID string, eventType Event, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
+
 	if records, err = repo.store.LoadBySequenceIDAndType(ctx, sequenceID, GetTypeName(eventType), opts...); err != nil {
 		return
 	}
+
 	return unmarshalRecords(repo.serializer, records)
 }
 
 // Deprecated
 func (repo repository) GetEventsByTimestamp(ctx context.Context, timestamp int64, opts ...QueryOption) (events []Event, err error) {
 	var records []Record
+
 	if records, err = repo.store.LoadByTimestamp(ctx, timestamp, opts...); err != nil {
 		return
 	}
+
 	return unmarshalRecords(repo.serializer, records)
 }

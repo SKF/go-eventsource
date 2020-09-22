@@ -4,12 +4,6 @@ import (
 	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
-var (
-	defaultOptions = &options{
-		descending: false,
-	}
-)
-
 type column string
 
 const (
@@ -108,11 +102,15 @@ func ByType(value string) eventsource.QueryOption {
 }
 
 // evaluate a list of options by extending the default options
-func evaluateQueryOptions(opts []eventsource.QueryOption) *options {
-	copy := &options{}
-	*copy = *defaultOptions
-	for _, opt := range opts {
-		opt(copy)
+func evaluateQueryOptions(queryOpts []eventsource.QueryOption) *options {
+	opts := &options{
+		descending: false,
+		where:      make(map[column]whereOpt),
 	}
-	return copy
+
+	for _, opt := range queryOpts {
+		opt(opts)
+	}
+
+	return opts
 }

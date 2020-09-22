@@ -158,11 +158,12 @@ func Test_SQLStoreE2E(t *testing.T) {
 
 	events, err := repo.LoadEvents(ctx, BySequenceID(""))
 	assert.NoError(t, err, "Could not get events")
-	assert.Equal(t, 8, len(events))
 
-	events, err = repo.LoadEvents(ctx, BySequenceID(events[len(events)-2].GetSequenceID()))
-	assert.NoError(t, err, "Could not get events")
-	assert.Equal(t, 1, len(events))
+	if assert.Equal(t, 8, len(events)) {
+		events, err = repo.LoadEvents(ctx, BySequenceID(events[len(events)-2].GetSequenceID()))
+		assert.NoError(t, err, "Could not get events")
+		assert.Equal(t, 1, len(events))
+	}
 }
 
 func Test_SQLStoreOptions(t *testing.T) {

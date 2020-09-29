@@ -1,0 +1,169 @@
+package dynamodbstore
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+)
+
+type column string
+
+const (
+	columnAggregateID column = "aggregateId"
+	columnSequenceID  column = "sequenceId"
+	columnTimestamp   column = "timestamp"
+	columnUserID      column = "userId"
+	columnType        column = "type"
+	columnData        column = "data"
+)
+
+var typeByColumn = map[column]string{
+	columnAggregateID: "S",
+	columnSequenceID:  "S",
+	columnTimestamp:   "N",
+	columnUserID:      "S",
+	columnType:        "S",
+	columnData:        "B",
+}
+
+type filterOpt struct {
+	columnName     string
+	attributeName  string
+	attributeValue string
+	attributeType  string
+	filterOperator string
+}
+
+type options struct {
+	limit         *int64
+	index         *string
+	filterOptions *filterOpt
+	timestamp     *string
+}
+
+// WithLimit will limit the result
+func WithLimit(limit int64) eventsource.QueryOption {
+	return func(i interface{}) {
+		if o, ok := i.(*options); ok {
+			o.limit = &limit
+		}
+	}
+}
+
+// WithIndex will query on an index instead of primarykey
+func WithIndex(indexName string) eventsource.QueryOption {
+	return func(i interface{}) {
+		if o, ok := i.(*options); ok {
+			o.index = &indexName
+		}
+	}
+}
+
+func withFilter(onColumn column, againstValue, withOperator string) eventsource.QueryOption {
+	return func(i interface{}) {
+		if o, ok := i.(*options); ok {
+			columnName := string(onColumn)
+			if !anyEmpty(columnName, againstValue, withOperator) {
+				filter := filterOpt{
+					columnName:     columnName,
+					attributeType:  typeByColumn[onColumn],
+					attributeName:  fmt.Sprintf("comparable%s", columnName),
+					attributeValue: againstValue,
+					filterOperator: withOperator,
+				}
+				o.filterOptions = &filter
+			}
+		}
+	}
+}
+
+func greaterThan(columnName column, value string) eventsource.QueryOption {
+	return withFilter(columnName, value, ">")
+}
+
+// BySequenceID will set filter to only return records with sequence id greater than value
+func BySequenceID(value string) eventsource.QueryOption {
+	return greaterThan(columnSequenceID, value)
+}
+
+// ByTimestamp will set filter to only return records with timestamp greater than value
+func ByTimestamp(value string) eventsource.QueryOption {
+	return func(i interface{}) {
+		if o, ok := i.(*options); ok {
+			o.timestamp = &value
+		}
+	}
+}
+
+// ByType will set filter to only return records with type equal to value
+func ByType(value string) eventsource.QueryOption {
+	return withFilter(columnType, value, "=")
+}
+
+// evaluate a list of options by extending the default options
+func evaluateQueryOptions(queryOpts []eventsource.QueryOption) *options {
+	opts := &options{}
+
+	for _, opt := range queryOpts {
+		opt(opts)
+	}
+
+	return opts
+}
+
+func anyEmpty(ss ...string) bool {
+	for _, s := range ss {
+		if strings.TrimSpace(s) == "" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (f *filterOpt) getDynamoAttributeValue() (dynamoValueMapping *dynamodb.AttributeValue) {
+	switch f.attributeType {
+	case "S":
+		mapping := dynamodb.AttributeValue{S: &f.attributeValue}
+		dynamoValueMapping = &mapping
+	case "N":
+		mapping := dynamodb.AttributeValue{N: &f.attributeValue}
+		dynamoValueMapping = &mapping
+	}
+
+	return dynamoValueMapping
+}
+
+func (f *filterOpt) mapExpressionAttributeValues(valueMap map[string]*dynamodb.AttributeValue) map[string]*dynamodb.AttributeValue {
+	if valueMap == nil {
+		valueMap = make(map[string]*dynamodb.AttributeValue)
+	}
+
+	attrName := fmt.Sprintf(":%s", f.attributeName)
+	valueMap[attrName] = f.getDynamoAttributeValue()
+
+	return valueMap
+}
+
+func (f *filterOpt) mapExpressionAttributeNames(nameMap map[string]*string) map[string]*string {
+	if nameMap == nil {
+		nameMap = make(map[string]*string)
+	}
+
+	keyAttrName := fmt.Sprintf("#%s", f.columnName)
+	nameMap[keyAttrName] = &f.columnName
+
+	return nameMap
+}
+
+func (f *filterOpt) mapFilterExpression(filterExpr *string) *string {
+	expr := fmt.Sprintf("#%s %s :%s", f.columnName, f.filterOperator, f.attributeName)
+
+	if filterExpr != nil {
+		expr = fmt.Sprintf("%s AND %s", *filterExpr, expr)
+	}
+
+	return &expr
+}

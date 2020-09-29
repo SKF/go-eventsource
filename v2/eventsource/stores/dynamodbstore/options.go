@@ -190,5 +190,4 @@ func mapTimestampToDynamoExpr(inputExpression *string, inputValues map[string]*d
 	expressionAttributeNames["#timestamp"] = aws.String("timestamp")
 
 	return expression, expressionAttributeValues, expressionAttributeNames
-
 }

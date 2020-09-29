@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
@@ -166,4 +167,28 @@ func (f *filterOpt) mapFilterExpression(filterExpr *string) *string {
 	}
 
 	return &expr
+}
+
+func mapTimestampToDynamoExpr(inputExpression *string, inputValues map[string]*dynamodb.AttributeValue, inputNames map[string]*string, timestamp *string) (expression string, expressionAttributeValues map[string]*dynamodb.AttributeValue, expressionAttributeNames map[string]*string) {
+	expression = "#timestamp > :ts"
+	if inputExpression != nil {
+		expression = *inputExpression + " AND #timestamp > :ts"
+	}
+
+	expressionAttributeValues = inputValues
+	if expressionAttributeValues == nil {
+		expressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
+	}
+
+	expressionAttributeValues[":ts"] = &dynamodb.AttributeValue{N: timestamp}
+
+	expressionAttributeNames = inputNames
+	if expressionAttributeNames == nil {
+		expressionAttributeNames = make(map[string]*string)
+	}
+
+	expressionAttributeNames["#timestamp"] = aws.String("timestamp")
+
+	return expression, expressionAttributeValues, expressionAttributeNames
+
 }

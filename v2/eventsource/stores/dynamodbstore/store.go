@@ -3,13 +3,12 @@ package dynamodbstore
 import (
 	"context"
 
+	"github.com/SKF/go-eventsource/v2/eventsource"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type store struct {
@@ -157,42 +156,22 @@ func addFilteringOnQuery(queryInput *dynamodb.QueryInput, filterOption *filterOp
 	}
 }
 
-func addTimestampOnScan(input *dynamodb.ScanInput, timestamp *string) {
+func addTimestampOnScan(scanInput *dynamodb.ScanInput, timestamp *string) {
 	if timestamp != nil {
-		exprWithTs := "#timestamp > :ts"
-		if input.FilterExpression != nil {
-			exprWithTs = *input.FilterExpression + " AND #timestamp > :ts"
-		}
-		input.FilterExpression = &exprWithTs
+		exprWithTs, values, names := mapTimestampToDynamoExpr(scanInput.FilterExpression, scanInput.ExpressionAttributeValues, scanInput.ExpressionAttributeNames, timestamp)
 
-		if input.ExpressionAttributeValues == nil {
-			input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
-		}
-		input.ExpressionAttributeValues[":ts"] = &dynamodb.AttributeValue{N: timestamp}
-
-		if input.ExpressionAttributeNames == nil {
-			input.ExpressionAttributeNames = make(map[string]*string)
-		}
-		input.ExpressionAttributeNames["#timestamp"] = aws.String("timestamp")
+		scanInput.FilterExpression = &exprWithTs
+		scanInput.ExpressionAttributeValues = values
+		scanInput.ExpressionAttributeNames = names
 	}
 }
 
-func addTimestampToQuery(input *dynamodb.QueryInput, timestamp *string) {
+func addTimestampToQuery(queryInput *dynamodb.QueryInput, timestamp *string) {
 	if timestamp != nil {
-		exprWithTs := "#timestamp > :ts"
-		if input.KeyConditionExpression != nil {
-			exprWithTs = *input.KeyConditionExpression + " AND #timestamp > :ts"
-		}
-		input.KeyConditionExpression = &exprWithTs
+		exprWithTs, values, names := mapTimestampToDynamoExpr(queryInput.KeyConditionExpression, queryInput.ExpressionAttributeValues, queryInput.ExpressionAttributeNames, timestamp)
 
-		if input.ExpressionAttributeValues == nil {
-			input.ExpressionAttributeValues = make(map[string]*dynamodb.AttributeValue)
-		}
-		input.ExpressionAttributeValues[":ts"] = &dynamodb.AttributeValue{N: timestamp}
-
-		if input.ExpressionAttributeNames == nil {
-			input.ExpressionAttributeNames = make(map[string]*string)
-		}
-		input.ExpressionAttributeNames["#timestamp"] = aws.String("timestamp")
+		queryInput.KeyConditionExpression = &exprWithTs
+		queryInput.ExpressionAttributeValues = values
+		queryInput.ExpressionAttributeNames = names
 	}
 }

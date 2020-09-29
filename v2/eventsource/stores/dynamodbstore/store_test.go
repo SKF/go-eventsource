@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SKF/go-eventsource/v2/eventsource"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 const dynamoTableName = "Events"

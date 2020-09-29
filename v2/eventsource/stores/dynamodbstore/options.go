@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SKF/go-eventsource/v2/eventsource"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+
+	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type column string

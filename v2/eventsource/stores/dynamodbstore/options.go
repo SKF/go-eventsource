@@ -8,6 +8,7 @@ import (
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
 	"github.com/SKF/go-utility/v2/array"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 type column string
@@ -50,6 +51,8 @@ func WithLimit(limit int64) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
 			o.limit = &limit
+		} else {
+			log.Warn("Trying to put limit option to a non dynamodbstore.options")
 		}
 	}
 }
@@ -59,6 +62,8 @@ func WithIndex(indexName string) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
 			o.index = &indexName
+		} else {
+			log.Warn("Trying to put index option to a non dynamodbstore.options")
 		}
 	}
 }
@@ -77,6 +82,8 @@ func withFilter(onColumn column, againstValue, withOperator string) eventsource.
 				}
 				o.filterOptions = &filter
 			}
+		} else {
+			log.Warn("Trying to put filter option to a non dynamodbstore.options")
 		}
 	}
 }

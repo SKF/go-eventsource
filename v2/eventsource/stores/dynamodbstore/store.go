@@ -7,9 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 type store struct {

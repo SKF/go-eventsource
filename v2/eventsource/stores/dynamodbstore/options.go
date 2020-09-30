@@ -2,12 +2,12 @@ package dynamodbstore
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-utility/v2/array"
 )
 
 type column string
@@ -67,7 +67,7 @@ func withFilter(onColumn column, againstValue, withOperator string) eventsource.
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
 			columnName := string(onColumn)
-			if !anyEmpty(columnName, againstValue, withOperator) {
+			if !array.ContainsEmpty(columnName, againstValue, withOperator) {
 				filter := filterOpt{
 					columnName:     columnName,
 					attributeType:  typeByColumn[onColumn],
@@ -113,16 +113,6 @@ func evaluateQueryOptions(queryOpts []eventsource.QueryOption) *options {
 	}
 
 	return opts
-}
-
-func anyEmpty(ss ...string) bool {
-	for _, s := range ss {
-		if strings.TrimSpace(s) == "" {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (f *filterOpt) getDynamoAttributeValue() (dynamoValueMapping *dynamodb.AttributeValue) {

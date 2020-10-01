@@ -102,6 +102,8 @@ func ByTimestamp(value string) eventsource.QueryOption {
 	return func(i interface{}) {
 		if o, ok := i.(*options); ok {
 			o.timestamp = &value
+		} else {
+			log.Warn("Trying to put timestamp option to a non dynamodbstore.options")
 		}
 	}
 }

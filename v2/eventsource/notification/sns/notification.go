@@ -17,10 +17,12 @@ type snsNotification struct {
 
 // New connection to the given SNS topic ARN
 func New(topicARN string) eventsource.NotificationService {
-	snsClient := sns.New(
-		session.Must(session.NewSession()),
-	)
-	return &snsNotification{topicARN, snsClient}
+	return NewWithSession(topicARN, session.Must(session.NewSession()))
+}
+
+// New connection to the given SNS topic ARN, using the provided session
+func NewWithSession(topicARN string, sess *session.Session) eventsource.NotificationService {
+	return &snsNotification{topicARN, sns.New(sess)}
 }
 
 func (sn *snsNotification) Send(record eventsource.Record) error {

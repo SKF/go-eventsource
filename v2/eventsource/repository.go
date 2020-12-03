@@ -63,7 +63,7 @@ type Serializer interface {
 // NotificationService represents a service which can emit notifications
 // when records are saved to the event source
 type NotificationService interface {
-	Send(record Record) error // deprecated
+	Send(record Record) error // deprecated use SendWithContext instead
 	SendWithContext(ctx context.Context, record Record) error
 }
 

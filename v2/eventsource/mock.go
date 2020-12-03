@@ -216,6 +216,11 @@ func (ns NotificationServiceMock) Send(record Record) error {
 	return args.Error(0)
 }
 
+func (ns NotificationServiceMock) SendWithContext(ctx context.Context, record Record) error {
+	args := ns.Called(ctx, record)
+	return args.Error(0)
+}
+
 var (
 	_ Store               = &StoreMock{}
 	_ Repository          = &RepositoryMock{}

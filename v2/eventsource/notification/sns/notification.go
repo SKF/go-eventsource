@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -26,6 +27,10 @@ func NewWithSession(topicARN string, sess *session.Session) eventsource.Notifica
 }
 
 func (sn *snsNotification) Send(record eventsource.Record) error {
+	return sn.SendWithContext(context.Background(), record)
+}
+
+func (sn *snsNotification) SendWithContext(ctx context.Context, record eventsource.Record) error {
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err
@@ -36,8 +41,6 @@ func (sn *snsNotification) Send(record eventsource.Record) error {
 		Message:  aws.String(string(data)),
 	}
 
-	if _, err = sn.sns.Publish(&input); err != nil {
-		return err
-	}
-	return nil
+	_, err = sn.sns.PublishWithContext(ctx, &input)
+	return err
 }

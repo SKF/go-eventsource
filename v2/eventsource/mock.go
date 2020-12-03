@@ -211,8 +211,8 @@ func CreateNotificationServiceMock() *NotificationServiceMock {
 	}
 }
 
-func (ns NotificationServiceMock) Send(record Record) error {
-	args := ns.Called(record)
+func (ns NotificationServiceMock) Send(ctx context.Context, record Record) error {
+	args := ns.Called(ctx, record)
 	return args.Error(0)
 }
 

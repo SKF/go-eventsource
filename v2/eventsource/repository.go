@@ -63,7 +63,8 @@ type Serializer interface {
 // NotificationService represents a service which can emit notifications
 // when records are saved to the event source
 type NotificationService interface {
-	Send(ctx context.Context, record Record) error
+	Send(record Record) error // deprecated
+	SendWithContext(ctx context.Context, record Record) error
 }
 
 // Repository is an interface representing the actual event source.
@@ -162,7 +163,7 @@ func (transWrap *transactionWrapper) Commit() error {
 
 	for _, service := range transWrap.notificationServices {
 		for _, r := range transWrap.transaction.GetRecords() {
-			if err = service.Send(transWrap.ctx, r); err != nil {
+			if err = service.SendWithContext(transWrap.ctx, r); err != nil {
 				return err
 			}
 		}

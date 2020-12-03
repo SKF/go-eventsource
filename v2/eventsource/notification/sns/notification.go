@@ -26,7 +26,11 @@ func NewWithSession(topicARN string, sess *session.Session) eventsource.Notifica
 	return &snsNotification{topicARN, sns.New(sess)}
 }
 
-func (sn *snsNotification) Send(ctx context.Context, record eventsource.Record) error {
+func (sn *snsNotification) Send(record eventsource.Record) error {
+	return sn.SendWithContext(context.Background(), record)
+}
+
+func (sn *snsNotification) SendWithContext(ctx context.Context, record eventsource.Record) error {
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err

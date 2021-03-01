@@ -15,6 +15,8 @@ var (
 	ErrDeleted = errors.New("not found (was deleted)")
 	// ErrNoHistory is returned by Repository.Load() when no history exist for the given aggregate ID
 	ErrNoHistory = errors.New("no history found")
+	// ErrNotificationFailed is returned by Commit() if notification service fails
+	ErrNotificationFailed = errors.New("Failed to send notification")
 )
 
 // QueryOption is used for setting store specific options like limit or sorting
@@ -155,6 +157,9 @@ func newTransactionWrapper(ctx context.Context, store Store, records []Record, n
 	return &transactionWrapper{ctx, transaction, ns}, nil
 }
 
+// Commit transaction to underlying store and, if configured, publish the records to a
+// notification service. If ErrNotificationFailed is returned, the data has been successfully
+// committed to the store, but the notification service failed.
 func (transWrap *transactionWrapper) Commit() error {
 	err := transWrap.transaction.Commit()
 	if err != nil {
@@ -164,7 +169,7 @@ func (transWrap *transactionWrapper) Commit() error {
 	for _, service := range transWrap.notificationServices {
 		for _, r := range transWrap.transaction.GetRecords() {
 			if err = service.SendWithContext(transWrap.ctx, r); err != nil {
-				return err
+				return ErrNotificationFailed
 			}
 		}
 	}

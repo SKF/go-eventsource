@@ -16,12 +16,12 @@ type snsNotification struct {
 	sns      *sns.SNS
 }
 
-// New connection to the given SNS topic ARN
+// New connection to the given SNS topic ARN.
 func New(topicARN string) eventsource.NotificationService {
 	return NewWithSession(topicARN, session.Must(session.NewSession()))
 }
 
-// New connection to the given SNS topic ARN, using the provided session
+// New connection to the given SNS topic ARN, using the provided session.
 func NewWithSession(topicARN string, sess *session.Session) eventsource.NotificationService {
 	return &snsNotification{topicARN, sns.New(sess)}
 }
@@ -39,8 +39,19 @@ func (sn *snsNotification) SendWithContext(ctx context.Context, record eventsour
 	input := sns.PublishInput{
 		TopicArn: &sn.topicARN,
 		Message:  aws.String(string(data)),
+		MessageAttributes: map[string]*sns.MessageAttributeValue{
+			"SKF.Hierarchy.EventType": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(record.Type),
+			},
+			"SKF.Hierarchy.Aggregate": {
+				DataType:    aws.String("String"),
+				StringValue: aws.String(record.AggregateID),
+			},
+		},
 	}
 
 	_, err = sn.sns.PublishWithContext(ctx, &input)
+
 	return err
 }

@@ -14,7 +14,7 @@ To create a new repository:
 It has an interface for saving events and loading an aggregate.
 
 ```
-ype Repository interface {
+type Repository interface {
 	// Return store
 	Store() Store
 

@@ -3,6 +3,7 @@ package eventsource
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"sync"
 	"time"
 
@@ -169,7 +170,7 @@ func (transWrap *transactionWrapper) Commit() error {
 	for _, service := range transWrap.notificationServices {
 		for _, r := range transWrap.transaction.GetRecords() {
 			if err = service.SendWithContext(transWrap.ctx, r); err != nil {
-				return ErrNotificationFailed
+				return fmt.Errorf("%w: %s", ErrNotificationFailed, err)
 			}
 		}
 	}

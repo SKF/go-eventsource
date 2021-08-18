@@ -369,3 +369,43 @@ func Test_RepoMock_OK(t *testing.T) {
 	assert.EqualError(t, err, expectedError.Error())
 	assert.False(t, deleted)
 }
+
+func TestSaveTransaction_WithPredefinedTimestamp(t *testing.T) {
+	event := &BaseEvent{
+		AggregateID: "timestamp-test",
+		UserID:      "Kalle Banka",
+		SequenceID:  "0000XSNJG0MQJHBF4QX1EFD6Y3",
+		Timestamp:   1257894000000000000,
+	}
+
+	store, transaction, serializer, _ := setupMocks()
+	store.On("NewTransaction", mock.Anything, mock.Anything).Return(transaction, nil)
+	serializer.On("Marshal", mock.Anything).Return([]byte{1}, nil)
+
+	repo := NewRepository(store, serializer)
+
+	_, err := repo.SaveTransaction(context.Background(), event)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1257894000000000000), event.Timestamp)
+}
+
+func TestSaveTransaction_TimestampZero(t *testing.T) {
+	event := &BaseEvent{
+		AggregateID: "timestamp-test",
+		UserID:      "Kalle Anka",
+		SequenceID:  "0000XSNJG0MQJHBF4QX1EFD6Y3",
+		Timestamp:   0,
+	}
+
+	store, transaction, serializer, _ := setupMocks()
+	store.On("NewTransaction", mock.Anything, mock.Anything).Return(transaction, nil)
+	serializer.On("Marshal", mock.Anything).Return([]byte{1}, nil)
+
+	repo := NewRepository(store, serializer)
+
+	_, err := repo.SaveTransaction(context.Background(), event)
+
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, event.Timestamp)
+}

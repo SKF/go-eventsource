@@ -228,7 +228,10 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 
 	for _, event := range events {
 		event.SetSequenceID(NewULID())
-		event.SetTimestamp(time.Now().UnixNano())
+
+		if event.GetTimestamp() == 0 {
+			event.SetTimestamp(time.Now().UnixNano())
+		}
 
 		data, err := repo.serializer.Marshal(event)
 		if err != nil {

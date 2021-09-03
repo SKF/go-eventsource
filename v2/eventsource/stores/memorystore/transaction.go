@@ -20,19 +20,21 @@ func (mem *store) NewTransaction(_ context.Context, records ...eventsource.Recor
 
 // Commit ...
 func (tx *transaction) Commit() error {
+	tx.mem.mutex.Lock()
+	defer tx.mem.mutex.Unlock()
+
 	for _, record := range tx.records {
 		id := record.AggregateID
-		if rows, ok := tx.mem.Data[id]; ok {
-			tx.mem.Data[id] = append(rows, record)
-		} else {
-			tx.mem.Data[id] = []eventsource.Record{record}
-		}
+		tx.mem.Data[id] = append(tx.mem.Data[id], record)
 	}
 
 	return nil
 }
 
 func (tx *transaction) Rollback() error {
+	tx.mem.mutex.Lock()
+	defer tx.mem.mutex.Unlock()
+
 	for _, record := range tx.records {
 		id := record.AggregateID
 		if rows, ok := tx.mem.Data[id]; ok {

@@ -2,6 +2,7 @@ package memorystore
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -65,4 +66,33 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 	records, err = store.LoadByAggregate(ctx, "B")
 	require.NoError(t, err)
 	assert.Len(t, records, 0)
+}
+
+func TestMemoryStoreConcurrentSave(t *testing.T) {
+	ctx := context.Background()
+	store := New()
+	repo := eventsource.NewRepository(store, &serializer{})
+
+	const n = 10_000
+	wg := sync.WaitGroup{}
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			evt := eventsource.BaseEvent{}
+			err := repo.Save(ctx, &evt)
+			require.NoError(t, err)
+		}()
+	}
+	wg.Wait()
+}
+
+type serializer struct{}
+
+func (s *serializer) Unmarshal(data []byte, eventType string) (event eventsource.Event, err error) {
+	return &eventsource.BaseEvent{}, nil
+
+}
+func (s *serializer) Marshal(event eventsource.Event) (data []byte, err error) {
+	return nil, nil
 }

@@ -2,12 +2,14 @@ package memorystore
 
 import (
 	"context"
+	"sync"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type store struct {
 	Data map[string][]eventsource.Record
+	mutex  sync.RWMutex
 }
 
 // New creates a new event store
@@ -23,6 +25,9 @@ func (mem *store) Load(_ context.Context, opts ...eventsource.QueryOption) ([]ev
 }
 
 func (mem *store) LoadByAggregate(_ context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+	mem.mutex.RLock()
+	defer mem.mutex.RUnlock()
+
 	if rows, ok := mem.Data[aggregateID]; ok {
 		return rows, nil
 	}
@@ -30,6 +35,9 @@ func (mem *store) LoadByAggregate(_ context.Context, aggregateID string, opts ..
 }
 
 func (mem *store) loadRecords(opts []eventsource.QueryOption) (records []eventsource.Record, err error) {
+	mem.mutex.RLock()
+	defer mem.mutex.RUnlock()
+
 	queryOpts := evaluateQueryOptions(opts)
 
 	var recordSlice []eventsource.Record

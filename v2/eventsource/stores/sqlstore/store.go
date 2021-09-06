@@ -6,14 +6,21 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-eventsource/v2/eventsource/stores/sqlstore/driver"
 )
 
 type store struct {
-	db        *sql.DB
+	db        DBWrapper
 	tablename string
+}
+
+type DBWrapper interface {
+	Load(ctx context.Context, query string, args []interface{}) ([]eventsource.Record, error)
+	NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error)
 }
 
 var (
@@ -25,7 +32,15 @@ var (
 // New creates a new event source store
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
-		db:        db,
+		db:        &driver.General{DB: db},
+		tablename: tableName,
+	}
+}
+
+// New creates a new event source store
+func NewPgx(db *pgxpool.Pool, tableName string) eventsource.Store {
+	return &store{
+		db:        &driver.PGX{DB: db},
 		tablename: tableName,
 	}
 }
@@ -38,6 +53,10 @@ func columnExist(key column) bool {
 	}
 
 	return false
+}
+
+func (store *store) NewTransaction(ctx context.Context, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
+	return store.db.NewTransaction(ctx, fmt.Sprintf(saveSQL, store.tablename), records...)
 }
 
 func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (returnedQuery string, args []interface{}, err error) {
@@ -87,51 +106,7 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 		return
 	}
 
-	stmt, err := store.db.PrepareContext(ctx, fullQuery)
-	if err != nil {
-		err = errors.Wrap(err, "failed to prepare sql query")
-
-		return
-	}
-
-	defer func() {
-		if errClose := stmt.Close(); errClose != nil {
-			if err != nil {
-				err = errors.Wrapf(err, "failed to close sql statement: %s", errClose)
-			} else {
-				err = errors.Wrap(errClose, "failed to close sql statement")
-			}
-		}
-	}()
-
-	rows, err := stmt.QueryContext(ctx, args...)
-	if err != nil {
-		err = errors.Wrap(err, "failed to execute sql query")
-
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var record eventsource.Record
-		if err = rows.Scan(
-			&record.AggregateID, &record.SequenceID, &record.Timestamp,
-			&record.UserID, &record.Type, &record.Data,
-		); err != nil {
-			err = errors.Wrap(err, "failed to scan sql row")
-			return
-		}
-
-		records = append(records, record)
-	}
-
-	if err = rows.Err(); err != nil {
-		err = errors.Wrap(err, "errors returned from sql store")
-
-		return
-	}
-
-	return records, err
+	return store.db.Load(ctx, fullQuery, args)
 }
 
 // Load will load records based on specified query options

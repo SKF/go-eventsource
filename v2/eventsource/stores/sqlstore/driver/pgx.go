@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-utility/v2/uuid"
 )
 
 type PGX struct {
@@ -15,21 +16,30 @@ type PGX struct {
 }
 
 func (pgx *PGX) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {
-	rows, err := pgx.DB.Query(ctx, query, args)
+	rows, err := pgx.DB.Query(ctx, query, args...)
 	if err != nil {
 		return records, errors.Wrap(err, "failed to load events using pgx")
 	}
 
 	for rows.Next() {
-		var record eventsource.Record
+		var (
+			record      eventsource.Record
+			aggregateID uuid.UUID
+			userID      uuid.UUID
+		)
+
+		// Scan aggregateID and userID to intermediate uuid, so they are transferred using binary representation
 		if err = rows.Scan(
-			&record.AggregateID, &record.SequenceID, &record.Timestamp,
-			&record.UserID, &record.Type, &record.Data,
+			&aggregateID, &record.SequenceID, &record.Timestamp,
+			&userID, &record.Type, &record.Data,
 		); err != nil {
 			err = errors.Wrap(err, "failed to scan sql row")
 
 			return
 		}
+
+		record.AggregateID = aggregateID.String()
+		record.UserID = userID.String()
 
 		records = append(records, record)
 	}
@@ -50,7 +60,7 @@ func (pgx *PGX) NewTransaction(ctx context.Context, query string, records ...eve
 	}
 
 	for _, record := range records {
-		_, err = tx.Exec(ctx, record.AggregateID, record.SequenceID, record.Timestamp, record.UserID, record.Type, record.Data)
+		_, err = tx.Exec(ctx, query, uuid.UUID(record.AggregateID), record.SequenceID, record.Timestamp, uuid.UUID(record.UserID), record.Type, record.Data)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to execute query")
 		}

@@ -29,7 +29,7 @@ var (
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )
 
-// New creates a new event source store
+// New creates a new event source store.
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
 		db:        &driver.General{DB: db},
@@ -37,7 +37,7 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-// New creates a new event source store
+// New creates a new event source store.
 func NewPgx(db *pgxpool.Pool, tableName string) eventsource.Store {
 	return &store{
 		db:        &driver.PGX{DB: db},
@@ -56,7 +56,7 @@ func columnExist(key column) bool {
 }
 
 func (store *store) NewTransaction(ctx context.Context, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
-	return store.db.NewTransaction(ctx, fmt.Sprintf(saveSQL, store.tablename), records...)
+	return store.db.NewTransaction(ctx, fmt.Sprintf(saveSQL, store.tablename), records...) // nolint:wrapcheck
 }
 
 func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (returnedQuery string, args []interface{}, err error) {
@@ -106,10 +106,10 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 		return
 	}
 
-	return store.db.Load(ctx, fullQuery, args)
+	return store.db.Load(ctx, fullQuery, args) // nolint:wrapcheck
 }
 
-// Load will load records based on specified query options
+// Load will load records based on specified query options.
 func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.fetchRecords(ctx, opts, loadSQL)
 }
@@ -118,17 +118,17 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 	return store.Load(ctx, append(opts, equals(columnAggregateID, aggregateID))...)
 }
 
-// Deprecated
+// Deprecated.
 func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.Load(ctx, append(opts, BySequenceID(sequenceID))...)
 }
 
-// Deprecated
+// Deprecated.
 func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.Load(ctx, append(opts, BySequenceID(sequenceID), ByType(eventType))...)
 }
 
-// Deprecated
+// Deprecated.
 func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.Load(ctx, append(opts, ByTimestamp(timestamp))...)
 }

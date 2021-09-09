@@ -11,20 +11,37 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: secret
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
 
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.15
+        go-version: ^1.17
       id: go
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-
     - name: Build
       run: cd v2 && go build -v ./...
 
     - name: Test
-      run: cd v2 && go test -v --short ./...
+      run: cd v2 && go test -v ./...
+      env:
+        PGHOST: localhost
+        PGPORT: 5432
+        PGPASSWORD: secret
+        PGSSLMODE: disable

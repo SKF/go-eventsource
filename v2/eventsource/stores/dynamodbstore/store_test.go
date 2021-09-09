@@ -10,13 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-utility/v2/env"
 )
 
 const dynamoTableName = "Events"
 
 func Test_SaveLoadRollback_AllInOne(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Do not run integration test")
+	if testing.Short() || env.GetAsString("AWS_REGION", "") == "" {
+		t.Skip("Do not run dynamodb integration test")
 	}
 
 	sess, err := session.NewSession()
@@ -63,7 +64,7 @@ func Test_SaveLoadRollback_AllInOne(t *testing.T) {
 }
 
 func Test_LoadByAggrWithFiltering(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || env.GetAsString("AWS_REGION", "") == "" {
 		t.Skip("Do not run integration test")
 	}
 
@@ -104,7 +105,7 @@ func Test_LoadByAggrWithFiltering(t *testing.T) {
 }
 
 func Test_LoadWithFiltering(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || env.GetAsString("AWS_REGION", "") == "" {
 		t.Skip("Do not run integration test")
 	}
 

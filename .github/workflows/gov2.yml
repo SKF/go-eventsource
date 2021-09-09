@@ -41,6 +41,7 @@ jobs:
     - name: Test
       run: cd v2 && go test -v ./...
       env:
+        PGUSER: postgres
         PGHOST: localhost
         PGPORT: 5432
         PGPASSWORD: secret

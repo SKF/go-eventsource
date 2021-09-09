@@ -69,14 +69,11 @@ var allTests = map[string]testFunc{
 func wrapTest(tf testFunc, store eventsource.Store) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Helper()
-		t.Parallel()
 		tf(t, store)
 	}
 }
 
-func TestGenericDriver(t *testing.T) {
-	t.Parallel()
-
+func TestGenericDriver(t *testing.T) { // nolint:paralleltest
 	for name, test := range allTests { // nolint:paralleltest
 		db, tableName := setupDB(t)
 		store := sqlstore.New(db, tableName)
@@ -85,9 +82,7 @@ func TestGenericDriver(t *testing.T) {
 	}
 }
 
-func TestPgxDriver(t *testing.T) {
-	t.Parallel()
-
+func TestPgxDriver(t *testing.T) { // nolint:paralleltest
 	for name, test := range allTests { // nolint:paralleltest
 		db, tableName := setupDBPgx(t)
 		store := sqlstore.NewPgx(db, tableName)
@@ -97,8 +92,6 @@ func TestPgxDriver(t *testing.T) {
 }
 
 func testLoadBySequenceID(t *testing.T, store eventsource.Store) { // nolint:thelper
-	t.Parallel()
-
 	eventTypes := []string{"EventTypeA", "EventTypeB", "EventTypeA", "EventTypeC", "EventTypeA"}
 	events, err := createTestEvents(store, 10, eventTypes, [][]byte{[]byte("TestData")})
 	require.NoError(t, err, "Failed to create events")
@@ -127,8 +120,6 @@ func testLoadBySequenceID(t *testing.T, store eventsource.Store) { // nolint:the
 }
 
 func testULID(t *testing.T, _ eventsource.Store) { // nolint:thelper
-	t.Parallel()
-
 	var (
 		entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0) // nolint:gosec
 		ulidNow = ulid.Now()
@@ -148,8 +139,6 @@ func testULID(t *testing.T, _ eventsource.Store) { // nolint:thelper
 }
 
 func testLoadAggregate(t *testing.T, store eventsource.Store) { // nolint:thelper
-	t.Parallel()
-
 	aggregateID := uuid.New().String()
 	userIDA, userIDB := uuid.New().String(), uuid.New().String()
 
@@ -187,8 +176,6 @@ func testLoadAggregate(t *testing.T, store eventsource.Store) { // nolint:thelpe
 }
 
 func testLoadEventOptions(t *testing.T, store eventsource.Store) { // nolint:thelper
-	t.Parallel()
-
 	repo := eventsource.NewRepository(store, json.NewSerializer(TestEventPosition{})) // nolint:exhaustivestruct
 
 	var (

@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SKF/go-eventsource/v2/eventsource"
-	"github.com/SKF/go-utility/env"
-	"github.com/SKF/go-utility/v2/pgxcompat"
-	"github.com/SKF/go-utility/v2/uuid"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-utility/env"
+	"github.com/SKF/go-utility/v2/pgxcompat"
+	"github.com/SKF/go-utility/v2/uuid"
 )
 
 func getConnectionString() string {
@@ -53,8 +54,9 @@ func setupDBPgx(t *testing.T) (*pgxpool.Pool, string) {
 		t.Skip("Skipping postgres e2e test")
 	}
 
-	dbConfig, err := pgxpool.ParseConfig(getConnectionString())
-	require.NoError(t, err, "Could not parse db connection string %s", getConnectionString())
+	connStr := getConnectionString()
+	dbConfig, err := pgxpool.ParseConfig(connStr)
+	require.NoError(t, err, "Could not parse db connection string %s", connStr)
 
 	dbConfig.MaxConns = 150
 	dbConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
@@ -90,6 +92,7 @@ func cleanupDBPgx(t *testing.T, db *pgxpool.Pool, tableName string) {
 	t.Helper()
 
 	defer db.Close()
+
 	_, err := db.Exec(ctx, fmt.Sprintf("DROP TABLE %s", tableName))
 	require.NoError(t, err, "Could not perform DB cleanup")
 }
@@ -109,6 +112,8 @@ func randomTableName() string {
 }
 
 func createTableQuery() (tableName, query string) {
+	tableName = randomTableName()
+
 	return tableName, fmt.Sprintf(`
 		CREATE TABLE %s (
 			sequence_id character(26) PRIMARY KEY,
@@ -117,7 +122,7 @@ func createTableQuery() (tableName, query string) {
 			created_at bigint NOT NULL,
 			type character varying(255),
 			data bytea
-		)`, randomTableName())
+		)`, tableName)
 }
 
 // createTestEvents - create some random test events in sequence.
@@ -146,8 +151,6 @@ func createTestEvents(store eventsource.Store, numberOfEvents int, eventTypeList
 			Timestamp:   time.Now().UnixNano(),
 			Data:        eventData,
 		}
-
-		ctx := context.Background()
 
 		var tx eventsource.StoreTransaction
 
@@ -179,5 +182,5 @@ func createTestEvents(store eventsource.Store, numberOfEvents int, eventTypeList
 		result = append(result, records[0])
 	}
 
-	return result, fmt.Errorf("failed to create events: %w", err)
+	return result, nil
 }

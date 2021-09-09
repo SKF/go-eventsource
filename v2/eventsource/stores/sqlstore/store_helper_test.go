@@ -58,7 +58,6 @@ func setupDBPgx(t *testing.T) (*pgxpool.Pool, string) {
 	dbConfig, err := pgxpool.ParseConfig(connStr)
 	require.NoError(t, err, "Could not parse db connection string %s", connStr)
 
-	dbConfig.MaxConns = 150
 	dbConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
 		conn.ConnInfo().RegisterDataType(pgtype.DataType{
 			Value: &pgxcompat.UUID{}, // nolint:exhaustivestruct
@@ -68,7 +67,6 @@ func setupDBPgx(t *testing.T) (*pgxpool.Pool, string) {
 
 		return nil
 	}
-	dbConfig.LazyConnect = true
 
 	db, err := pgxpool.ConnectConfig(context.Background(), dbConfig)
 	require.NoError(t, err, "Could not connect to db")

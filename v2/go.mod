@@ -3,6 +3,7 @@ module github.com/SKF/go-eventsource/v2
 go 1.17
 
 require (
+	github.com/SKF/go-utility v1.10.4
 	github.com/SKF/go-utility/v2 v2.23.1-0.20210909202038-c8edacfaae91
 	github.com/aws/aws-sdk-go v1.35.30
 	github.com/jackc/pgtype v1.8.1
@@ -42,6 +43,5 @@ require (
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.27.1 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )

@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/SKF/go-utility v1.10.4
-	github.com/SKF/go-utility/v2 v2.23.1-0.20210909202038-c8edacfaae91
+	github.com/SKF/go-utility/v2 v2.24.0
 	github.com/aws/aws-sdk-go v1.35.30
 	github.com/jackc/pgtype v1.8.1
 	github.com/jackc/pgx/v4 v4.13.0

@@ -9,15 +9,11 @@ import (
 	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
-type General struct {
+type Generic struct {
 	DB *sql.DB
 }
 
-func New(db *sql.DB) *General {
-	return &General{DB: db}
-}
-
-func (dwWrap *General) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {
+func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {
 	stmt, err := dwWrap.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return records, errors.Wrap(err, "failed to prepare sql query")
@@ -64,7 +60,7 @@ func (dwWrap *General) Load(ctx context.Context, query string, args []interface{
 	return records, err
 }
 
-func (dwWrap *General) NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
+func (dwWrap *Generic) NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
 	tx, err := dwWrap.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to start new transaction")

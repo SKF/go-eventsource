@@ -13,14 +13,14 @@ import (
 	"github.com/SKF/go-eventsource/v2/eventsource/stores/sqlstore/driver"
 )
 
-type store struct {
-	db        DBWrapper
-	tablename string
-}
-
-type DBWrapper interface {
+type EventDB interface {
 	Load(ctx context.Context, query string, args []interface{}) ([]eventsource.Record, error)
 	NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error)
+}
+
+type store struct {
+	db        EventDB
+	tablename string
 }
 
 var (
@@ -32,7 +32,7 @@ var (
 // New creates a new event source store.
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
-		db:        &driver.General{DB: db},
+		db:        &driver.Generic{DB: db},
 		tablename: tableName,
 	}
 }

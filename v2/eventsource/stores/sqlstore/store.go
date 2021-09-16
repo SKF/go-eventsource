@@ -6,13 +6,20 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-eventsource/v2/eventsource/stores/sqlstore/driver"
 )
 
+type EventDB interface {
+	Load(ctx context.Context, query string, args []interface{}) ([]eventsource.Record, error)
+	NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error)
+}
+
 type store struct {
-	db        *sql.DB
+	db        EventDB
 	tablename string
 }
 
@@ -22,10 +29,18 @@ var (
 	loadSQL = "SELECT aggregate_id, sequence_id, created_at, user_id, type, data FROM %s"
 )
 
-// New creates a new event source store
+// New creates a new event source store.
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
-		db:        db,
+		db:        &driver.Generic{DB: db},
+		tablename: tableName,
+	}
+}
+
+// New creates a new event source store.
+func NewPgx(db *pgxpool.Pool, tableName string) eventsource.Store {
+	return &store{
+		db:        &driver.PGX{DB: db},
 		tablename: tableName,
 	}
 }
@@ -38,6 +53,10 @@ func columnExist(key column) bool {
 	}
 
 	return false
+}
+
+func (store *store) NewTransaction(ctx context.Context, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
+	return store.db.NewTransaction(ctx, fmt.Sprintf(saveSQL, store.tablename), records...) // nolint:wrapcheck
 }
 
 func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (returnedQuery string, args []interface{}, err error) {
@@ -87,54 +106,10 @@ func (store *store) fetchRecords(ctx context.Context, queryOpts []eventsource.Qu
 		return
 	}
 
-	stmt, err := store.db.PrepareContext(ctx, fullQuery)
-	if err != nil {
-		err = errors.Wrap(err, "failed to prepare sql query")
-
-		return
-	}
-
-	defer func() {
-		if errClose := stmt.Close(); errClose != nil {
-			if err != nil {
-				err = errors.Wrapf(err, "failed to close sql statement: %s", errClose)
-			} else {
-				err = errors.Wrap(errClose, "failed to close sql statement")
-			}
-		}
-	}()
-
-	rows, err := stmt.QueryContext(ctx, args...)
-	if err != nil {
-		err = errors.Wrap(err, "failed to execute sql query")
-
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var record eventsource.Record
-		if err = rows.Scan(
-			&record.AggregateID, &record.SequenceID, &record.Timestamp,
-			&record.UserID, &record.Type, &record.Data,
-		); err != nil {
-			err = errors.Wrap(err, "failed to scan sql row")
-			return
-		}
-
-		records = append(records, record)
-	}
-
-	if err = rows.Err(); err != nil {
-		err = errors.Wrap(err, "errors returned from sql store")
-
-		return
-	}
-
-	return records, err
+	return store.db.Load(ctx, fullQuery, args) // nolint:wrapcheck
 }
 
-// Load will load records based on specified query options
+// Load will load records based on specified query options.
 func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.fetchRecords(ctx, opts, loadSQL)
 }
@@ -143,17 +118,17 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 	return store.Load(ctx, append(opts, equals(columnAggregateID, aggregateID))...)
 }
 
-// Deprecated
+// Deprecated.
 func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.Load(ctx, append(opts, BySequenceID(sequenceID))...)
 }
 
-// Deprecated
+// Deprecated.
 func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.Load(ctx, append(opts, BySequenceID(sequenceID), ByType(eventType))...)
 }
 
-// Deprecated
+// Deprecated.
 func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	return store.Load(ctx, append(opts, ByTimestamp(timestamp))...)
 }

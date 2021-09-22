@@ -26,6 +26,11 @@ func NewWithSession(topicARN string, sess *session.Session) eventsource.Notifica
 	return &snsNotification{topicARN, sns.New(sess)}
 }
 
+// New connection to the given SNS topic ARN, using the provided SNS client.
+func NewWithClient(topicARN string, client *sns.SNS) eventsource.NotificationService {
+	return &snsNotification{topicARN, client}
+}
+
 func (sn *snsNotification) Send(record eventsource.Record) error {
 	return sn.SendWithContext(context.Background(), record)
 }

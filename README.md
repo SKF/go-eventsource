@@ -75,3 +75,7 @@ type Serializer interface {
 	Marshal(event Event) ([]byte, error)
 }
 ```
+
+### UUID Compatibility
+You might have to enable compatibility with our internal UUID package using an after-connect handler
+- https://github.com/SKF/go-utility/tree/master/v2/pgxcompat

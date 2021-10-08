@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
@@ -37,8 +36,8 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-// New creates a new event source store.
-func NewPgx(db *pgxpool.Pool, tableName string) eventsource.Store {
+// NewPgx creates a new event source store.
+func NewPgx(db driver.PgxPool, tableName string) eventsource.Store {
 	return &store{
 		db:        &driver.PGX{DB: db},
 		tablename: tableName,

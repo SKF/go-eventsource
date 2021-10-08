@@ -4,15 +4,19 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
 	"github.com/SKF/go-utility/v2/uuid"
 )
 
+type PgxPool interface {
+	Begin(context.Context) (pgx.Tx, error)
+	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
+}
+
 type PGX struct {
-	DB *pgxpool.Pool
+	DB PgxPool
 }
 
 func (pgx *PGX) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {

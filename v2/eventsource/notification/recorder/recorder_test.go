@@ -11,6 +11,8 @@ import (
 )
 
 func TestRecorder_SendEvent(t *testing.T) {
+	t.Parallel()
+
 	r := recorder.Recorder{}
 
 	d := struct {
@@ -23,12 +25,11 @@ func TestRecorder_SendEvent(t *testing.T) {
 	require.NoError(t, err)
 
 	e := eventsource.Record{
-		Data:        bytes,
+		Data: bytes,
 	}
 
 	err = r.Send(e)
 	require.NoError(t, err)
-
 
 	events := r.GetEventDatas()
 	require.Equal(t, "apa", events[0]["value1"])

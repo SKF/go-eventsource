@@ -217,6 +217,7 @@ func (repo *repository) Save(ctx context.Context, events ...Event) error {
 		if rollbackErr != nil {
 			return errors.Wrapf(err, "rollback error: %+v", rollbackErr)
 		}
+
 		return errors.Wrap(err, "failed to commit transaction")
 	}
 
@@ -280,7 +281,7 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 
 		err = aggr.On(ctx, event)
 
-		if err == ErrDeleted {
+		if errors.Is(err, ErrDeleted) {
 			return true, nil
 		}
 

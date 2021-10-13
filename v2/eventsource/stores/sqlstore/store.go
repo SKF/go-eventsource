@@ -17,9 +17,14 @@ type EventDB interface {
 	NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error)
 }
 
+type PGXStore struct {
+	db        *driver.PGX
+	tableName string
+}
+
 type store struct {
 	db        EventDB
-	tablename string
+	tableName string
 }
 
 var (
@@ -32,15 +37,15 @@ var (
 func New(db *sql.DB, tableName string) eventsource.Store {
 	return &store{
 		db:        &driver.Generic{DB: db},
-		tablename: tableName,
+		tableName: tableName,
 	}
 }
 
 // NewPgx creates a new event source store.
-func NewPgx(db driver.PgxPool, tableName string) eventsource.Store {
-	return &store{
+func NewPgx(db driver.PgxPool, tableName string) *PGXStore {
+	return &PGXStore{
 		db:        &driver.PGX{DB: db},
-		tablename: tableName,
+		tableName: tableName,
 	}
 }
 
@@ -54,12 +59,18 @@ func columnExist(key column) bool {
 	return false
 }
 
+func (store *PGXStore) WithNotificationChannel(channel string) *PGXStore {
+	store.db.NotificationChannel = &channel
+
+	return store
+}
+
 func (store *store) NewTransaction(ctx context.Context, records ...eventsource.Record) (eventsource.StoreTransaction, error) {
-	return store.db.NewTransaction(ctx, fmt.Sprintf(saveSQL, store.tablename), records...) // nolint:wrapcheck
+	return store.db.NewTransaction(ctx, fmt.Sprintf(saveSQL, store.tableName), records...) // nolint:wrapcheck
 }
 
 func (store *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (returnedQuery string, args []interface{}, err error) {
-	fullQuery := []string{fmt.Sprintf(query, store.tablename)}
+	fullQuery := []string{fmt.Sprintf(query, store.tableName)}
 	opts := evaluateQueryOptions(queryOpts)
 
 	if len(opts.where) > 0 {

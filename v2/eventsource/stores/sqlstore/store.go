@@ -42,7 +42,7 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 }
 
 // NewPgx creates a new event source store.
-func NewPgx(db driver.PgxPool, tableName string) eventsource.Store {
+func NewPgx(db driver.PgxPool, tableName string) PGXStore {
 	return &store{
 		db:        &driver.PGX{DB: db, NotificationChannel: nil},
 		tableName: tableName,
@@ -59,7 +59,7 @@ func columnExist(key column) bool {
 	return false
 }
 
-func (store *store) WithNotificationChannel(channel string) eventsource.Store {
+func (store *store) WithNotificationChannel(channel string) PGXStore {
 	if db, ok := store.db.(*driver.PGX); ok {
 		db.NotificationChannel = &channel
 	}

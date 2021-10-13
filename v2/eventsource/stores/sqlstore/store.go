@@ -17,9 +17,9 @@ type EventDB interface {
 	NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error)
 }
 
-type PGXStore struct {
-	db        *driver.PGX
-	tableName string
+type PGXStore interface {
+	eventsource.Store
+	WithNotificationChannel(channel string) PGXStore
 }
 
 type store struct {
@@ -42,9 +42,9 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 }
 
 // NewPgx creates a new event source store.
-func NewPgx(db driver.PgxPool, tableName string) *PGXStore {
-	return &PGXStore{
-		db:        &driver.PGX{DB: db},
+func NewPgx(db driver.PgxPool, tableName string) eventsource.Store {
+	return &store{
+		db:        &driver.PGX{DB: db, NotificationChannel: nil},
 		tableName: tableName,
 	}
 }
@@ -59,8 +59,10 @@ func columnExist(key column) bool {
 	return false
 }
 
-func (store *PGXStore) WithNotificationChannel(channel string) *PGXStore {
-	store.db.NotificationChannel = &channel
+func (store *store) WithNotificationChannel(channel string) eventsource.Store {
+	if db, ok := store.db.(*driver.PGX); ok {
+		db.NotificationChannel = &channel
+	}
 
 	return store
 }

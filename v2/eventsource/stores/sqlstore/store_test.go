@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgconn"
 	_ "github.com/lib/pq"
 	"github.com/oklog/ulid"
 	"github.com/stretchr/testify/assert"
@@ -89,6 +90,34 @@ func TestPgxDriver(t *testing.T) { // nolint:paralleltest
 		t.Run(name, wrapTest(test, store))
 		cleanupDBPgx(t, db, tableName)
 	}
+}
+
+func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
+	db, tableName := setupDBPgx(t)
+	store := sqlstore.NewPgx(db, tableName).WithNotificationChannel("test")
+	c := make(chan *pgconn.Notification)
+
+	go func() {
+		conn, _ := db.Acquire(ctx) // nolint:errcheck
+		defer conn.Release()
+
+		_, err := conn.Exec(ctx, "LISTEN test")
+		require.NoError(t, err)
+
+		n, err := conn.Conn().WaitForNotification(ctx)
+		require.NoError(t, err)
+
+		c <- n
+	}()
+
+	time.Sleep(time.Duration(100) * time.Millisecond)
+
+	events, err := createTestEvents(store, 1, []string{"EventTypeA"}, [][]byte{[]byte("TestData")})
+	require.NoError(t, err)
+
+	event := <-c
+	require.Equal(t, events[0].SequenceID, event.Payload)
+	cleanupDBPgx(t, db, tableName)
 }
 
 func testLoadBySequenceID(t *testing.T, store eventsource.Store) { // nolint:thelper

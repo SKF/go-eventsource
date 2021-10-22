@@ -97,7 +97,7 @@ func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 	db, tableName := setupDBPgx(t)
 	store := sqlstore.NewPgx(db, tableName).WithNotifications()
 	c := make(chan *pgconn.Notification)
-	timeout := make(chan bool)
+	timeout, listening := make(chan bool), make(chan bool)
 
 	go func() {
 		conn, _ := db.Acquire(ctx) // nolint:errcheck
@@ -105,6 +105,8 @@ func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 
 		_, err := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", tableName))
 		require.NoError(t, err)
+
+		listening <- true
 
 		timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
@@ -117,7 +119,7 @@ func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 		}
 	}()
 
-	time.Sleep(time.Duration(100) * time.Millisecond)
+	<-listening
 
 	events, err := createTestEvents(store, 1, []string{"EventTypeA"}, [][]byte{[]byte("TestData")})
 	require.NoError(t, err)

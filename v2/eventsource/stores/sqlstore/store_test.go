@@ -2,6 +2,7 @@ package sqlstore_test
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -94,14 +95,14 @@ func TestPgxDriver(t *testing.T) { // nolint:paralleltest
 
 func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 	db, tableName := setupDBPgx(t)
-	store := sqlstore.NewPgx(db, tableName).WithNotificationChannel("test")
+	store := sqlstore.NewPgx(db, tableName).WithNotifications()
 	c := make(chan *pgconn.Notification)
 
 	go func() {
 		conn, _ := db.Acquire(ctx) // nolint:errcheck
 		defer conn.Release()
 
-		_, err := conn.Exec(ctx, "LISTEN test")
+		_, err := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", tableName))
 		require.NoError(t, err)
 
 		n, err := conn.Conn().WaitForNotification(ctx)

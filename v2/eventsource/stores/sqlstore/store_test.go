@@ -97,6 +97,7 @@ func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 	db, tableName := setupDBPgx(t)
 	store := sqlstore.NewPgx(db, tableName).WithNotifications()
 	c := make(chan *pgconn.Notification)
+	timeout := make(chan bool)
 
 	go func() {
 		conn, _ := db.Acquire(ctx) // nolint:errcheck
@@ -105,10 +106,15 @@ func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 		_, err := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", tableName))
 		require.NoError(t, err)
 
-		n, err := conn.Conn().WaitForNotification(ctx)
-		require.NoError(t, err)
+		timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
 
-		c <- n
+		n, err := conn.Conn().WaitForNotification(timeoutCtx)
+		if err != nil {
+			timeout <- true
+		} else {
+			c <- n
+		}
 	}()
 
 	time.Sleep(time.Duration(100) * time.Millisecond)
@@ -116,8 +122,13 @@ func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 	events, err := createTestEvents(store, 1, []string{"EventTypeA"}, [][]byte{[]byte("TestData")})
 	require.NoError(t, err)
 
-	event := <-c
-	require.Equal(t, events[0].SequenceID, event.Payload)
+	select {
+	case event := <-c:
+		require.Equal(t, events[0].SequenceID, event.Payload)
+	case <-timeout:
+		t.Error("Timed out waiting for NOTIFY event")
+	}
+
 	cleanupDBPgx(t, db, tableName)
 }
 

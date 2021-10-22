@@ -100,7 +100,7 @@ func cleanupDBPgx(t *testing.T, db *pgxpool.Pool, tableName string) {
 
 func randomTableName() string {
 	numChars := 30
-	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	letters := []rune("abcdefghijklmnopqrstuvwxyz")
 	tableName := make([]rune, numChars)
 
 	rand.Seed(time.Now().UnixNano())

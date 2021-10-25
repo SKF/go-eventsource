@@ -31,6 +31,7 @@ func (n *Recorder) GetEventDatas() []map[string]interface{} {
 		if err != nil {
 			panic(err)
 		}
+
 		m["EventType"] = n.events[i].Type
 		events[i] = m
 	}

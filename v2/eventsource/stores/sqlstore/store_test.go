@@ -2,10 +2,12 @@ package sqlstore_test
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgconn"
 	_ "github.com/lib/pq"
 	"github.com/oklog/ulid"
 	"github.com/stretchr/testify/assert"
@@ -89,6 +91,47 @@ func TestPgxDriver(t *testing.T) { // nolint:paralleltest
 		t.Run(name, wrapTest(test, store))
 		cleanupDBPgx(t, db, tableName)
 	}
+}
+
+func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
+	db, tableName := setupDBPgx(t)
+	store := sqlstore.NewPgx(db, tableName).WithPostgresNotify()
+	c := make(chan *pgconn.Notification)
+	timeout, listening := make(chan bool), make(chan bool)
+
+	go func() {
+		conn, _ := db.Acquire(ctx) // nolint:errcheck
+		defer conn.Release()
+
+		_, err := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", tableName))
+		require.NoError(t, err)
+
+		listening <- true
+
+		timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
+
+		n, err := conn.Conn().WaitForNotification(timeoutCtx)
+		if err != nil {
+			timeout <- true
+		} else {
+			c <- n
+		}
+	}()
+
+	<-listening
+
+	events, err := createTestEvents(store, 1, []string{"EventTypeA"}, [][]byte{[]byte("TestData")})
+	require.NoError(t, err)
+
+	select {
+	case event := <-c:
+		require.Equal(t, events[0].SequenceID, event.Payload)
+	case <-timeout:
+		t.Error("Timed out waiting for NOTIFY event")
+	}
+
+	cleanupDBPgx(t, db, tableName)
 }
 
 func testLoadBySequenceID(t *testing.T, store eventsource.Store) { // nolint:thelper

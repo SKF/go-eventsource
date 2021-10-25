@@ -16,7 +16,8 @@ type PgxPool interface {
 }
 
 type PGX struct {
-	DB PgxPool
+	DB                  PgxPool
+	NotificationChannel *string
 }
 
 func (pgx *PGX) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {
@@ -70,20 +71,29 @@ func (pgx *PGX) NewTransaction(ctx context.Context, query string, records ...eve
 		}
 	}
 
+	if pgx.NotificationChannel != nil && len(records) > 0 {
+		_, err = tx.Exec(ctx, "SELECT pg_notify($1, $2)", pgx.NotificationChannel, records[len(records)-1].SequenceID)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to notify listeners of new events")
+		}
+	}
+
 	return &pgxTransaction{
 		sqlTx:   tx,
+		ctx:     ctx,
 		records: records,
 	}, nil
 }
 
 type pgxTransaction struct {
 	sqlTx   pgx.Tx
+	ctx     context.Context
 	records []eventsource.Record
 }
 
 // Commit ...
 func (tx *pgxTransaction) Commit() (err error) {
-	if err := tx.sqlTx.Commit(context.Background()); err != nil {
+	if err := tx.sqlTx.Commit(tx.ctx); err != nil {
 		return errors.Wrap(err, "failed to commit transaction")
 	}
 

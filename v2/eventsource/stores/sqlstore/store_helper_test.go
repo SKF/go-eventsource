@@ -21,12 +21,15 @@ import (
 )
 
 func getConnectionString() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s",
-		env.MustGetAsString("PGHOST"),
-		env.MustGetAsString("PGPORT"),
-		env.MustGetAsString("PGUSER"),
+	user := env.MustGetAsString("PGUSER")
+
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s dbname=%s",
+		env.GetAsString("PGHOST", "localhost"),
+		env.GetAsString("PGPORT", "5432"),
+		user,
 		env.MustGetAsString("PGPASSWORD"),
 		env.MustGetAsString("PGSSLMODE"),
+		env.GetAsString("PGDB", user),
 	)
 }
 
@@ -97,7 +100,7 @@ func cleanupDBPgx(t *testing.T, db *pgxpool.Pool, tableName string) {
 
 func randomTableName() string {
 	numChars := 30
-	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	letters := []rune("abcdefghijklmnopqrstuvwxyz")
 	tableName := make([]rune, numChars)
 
 	rand.Seed(time.Now().UnixNano())

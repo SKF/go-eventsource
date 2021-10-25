@@ -95,7 +95,7 @@ func TestPgxDriver(t *testing.T) { // nolint:paralleltest
 
 func TestPgxListenNotify(t *testing.T) { // nolint:paralleltest
 	db, tableName := setupDBPgx(t)
-	store := sqlstore.NewPgx(db, tableName).WithNotifications()
+	store := sqlstore.NewPgx(db, tableName).WithPostgresNotify()
 	c := make(chan *pgconn.Notification)
 	timeout, listening := make(chan bool), make(chan bool)
 

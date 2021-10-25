@@ -19,7 +19,7 @@ type EventDB interface {
 
 type PGXStore interface {
 	eventsource.Store
-	WithNotifications() PGXStore
+	WithPostgresNotify() PGXStore
 }
 
 type store struct {
@@ -59,7 +59,7 @@ func columnExist(key column) bool {
 	return false
 }
 
-func (s *store) WithNotifications() PGXStore {
+func (s *store) WithPostgresNotify() PGXStore {
 	if db, ok := s.db.(*driver.PGX); ok {
 		db.NotificationChannel = &s.tableName
 	}

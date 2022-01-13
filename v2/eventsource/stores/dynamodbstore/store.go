@@ -8,8 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/pkg/errors"
 
-	"github.com/SKF/go-eventsource/v2/eventsource"
 	"github.com/SKF/go-utility/v2/log"
+
+	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type store struct {
@@ -46,8 +47,14 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 	addTimestampToQuery(&input, queryOpts.timestamp)
 	addFilteringOnQuery(&input, queryOpts.filterOptions)
 
-	output, err := store.db.QueryWithContext(ctx, &input)
-	if err != nil {
+	var resultItems []map[string]*dynamodb.AttributeValue
+
+	if err = store.db.QueryPagesWithContext(ctx, &input,
+		func(result *dynamodb.QueryOutput, lastPage bool) bool {
+			resultItems = append(resultItems, result.Items...)
+			return !lastPage
+		},
+	); err != nil {
 		log.
 			WithField("input", input).
 			WithField("error", err).
@@ -56,7 +63,7 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 		return
 	}
 
-	err = dynamodbattribute.UnmarshalListOfMaps(output.Items, &records)
+	err = dynamodbattribute.UnmarshalListOfMaps(resultItems, &records)
 	if err != nil {
 		log.
 			WithField("error", err).

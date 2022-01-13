@@ -41,14 +41,8 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 		ConsistentRead:            &store.consistentRead,
 	}
 
-	var resultItems []map[string]*dynamodb.AttributeValue
-
-	if err = store.db.QueryPagesWithContext(ctx, &input,
-		func(result *dynamodb.QueryOutput, lastPage bool) bool {
-			resultItems = append(resultItems, result.Items...)
-			return !lastPage
-		},
-	); err != nil {
+	output, err := store.db.QueryWithContext(ctx, &input)
+	if err != nil {
 		log.
 			WithField("input", input).
 			WithField("error", err).
@@ -57,7 +51,7 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 		return
 	}
 
-	err = dynamodbattribute.UnmarshalListOfMaps(resultItems, &records)
+	err = dynamodbattribute.UnmarshalListOfMaps(output.Items, &records)
 	if err != nil {
 		log.
 			WithField("error", err).

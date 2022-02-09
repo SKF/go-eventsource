@@ -93,6 +93,12 @@ func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (
 	var scanItems = []map[string]*dynamodb.AttributeValue{}
 
 	err = store.db.ScanPagesWithContext(ctx, &scanInput, func(output *dynamodb.ScanOutput, lastPage bool) bool {
+		if limitReached(queryOpts, len(scanItems), len(output.Items)) {
+			diff := (int(*queryOpts.limit) - len(scanItems))
+			scanItems = append(scanItems, output.Items[:diff]...)
+			return false
+		}
+
 		scanItems = append(scanItems, output.Items...)
 		return !lastPage
 	})
@@ -182,4 +188,15 @@ func addTimestampToQuery(queryInput *dynamodb.QueryInput, timestamp *string) {
 		queryInput.ExpressionAttributeValues = values
 		queryInput.ExpressionAttributeNames = names
 	}
+}
+
+func limitReached(queryOpts *options, collectedItems, newItems int) bool {
+	if queryOpts == nil || queryOpts.limit == nil {
+		return false
+	}
+
+	limit := int(*queryOpts.limit)
+	sum := (collectedItems + newItems)
+
+	return sum >= limit
 }

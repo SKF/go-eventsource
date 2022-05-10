@@ -2,6 +2,7 @@ package dynamodbstore
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -43,11 +44,7 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 
 	output, err := store.db.QueryWithContext(ctx, &input)
 	if err != nil {
-		log.
-			WithField("input", input).
-			WithField("error", err).
-			Error("Couldn't scan pages")
-		err = errors.Wrap(err, "couldn't scan pages")
+		err = fmt.Errorf("couldn't scan pages (input=%+v): %w", input, err)
 		return
 	}
 

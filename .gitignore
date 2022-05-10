@@ -17,3 +17,6 @@
 .glide
 vendor
 glide.lock
+
+# IDE
+.idea

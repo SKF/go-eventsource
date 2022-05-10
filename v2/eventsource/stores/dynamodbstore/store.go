@@ -2,15 +2,14 @@ package dynamodbstore
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-utility/v2/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/pkg/errors"
-
-	"github.com/SKF/go-utility/v2/log"
-
-	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type store struct {
@@ -55,20 +54,13 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 			return !lastPage
 		},
 	); err != nil {
-		log.
-			WithField("input", input).
-			WithField("error", err).
-			Error("Couldn't scan pages")
-		err = errors.Wrap(err, "couldn't scan pages")
+		err = fmt.Errorf("couldn't scan pages (input=%+v): %w", input, err)
 		return
 	}
 
 	err = dynamodbattribute.UnmarshalListOfMaps(resultItems, &records)
 	if err != nil {
-		log.
-			WithField("error", err).
-			Error("Couldn't unmarshal list of maps")
-		err = errors.Wrap(err, "couldn't unmarshal list of maps")
+		err = fmt.Errorf("couldn't unmarshal list of maps: %w", err)
 		return
 	}
 
@@ -90,51 +82,38 @@ func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (
 	addTimestampOnScan(&scanInput, queryOpts.timestamp)
 	addFilteringOnScan(&scanInput, queryOpts.filterOptions)
 
-	var scanItems = []map[string]*dynamodb.AttributeValue{}
+	var scanItems []map[string]*dynamodb.AttributeValue
 
 	err = store.db.ScanPagesWithContext(ctx, &scanInput, func(output *dynamodb.ScanOutput, lastPage bool) bool {
 		scanItems = append(scanItems, output.Items...)
 		return !lastPage
 	})
 	if err != nil {
-		log.
-			WithField("input", scanInput).
-			WithField("error", err).
-			Error("Couldn't scan pages")
-		err = errors.Wrap(err, "couldn't scan pages")
+		err = fmt.Errorf("couldn't scan pages (input=%+v): %w", scanInput, err)
 		return
 	}
 
 	err = dynamodbattribute.UnmarshalListOfMaps(scanItems, &records)
 	if err != nil {
-		log.
-			WithField("error", err).
-			Error("Couldn't unmarshal list of maps")
-		err = errors.Wrap(err, "couldn't unmarshal list of maps")
+		err = fmt.Errorf("couldn't unmarshal list of maps: %w", err)
 		return
 	}
 
 	return records, err
 }
 
-// Deprecated
-func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+func (store *store) LoadBySequenceID(_ context.Context, _ string, _ ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
-	log.Error(err.Error())
 	return
 }
 
-// Deprecated
-func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+func (store *store) LoadBySequenceIDAndType(_ context.Context, _ string, _ string, _ ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
-	log.Error(err.Error())
 	return
 }
 
-// Deprecated
-func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
+func (store *store) LoadByTimestamp(_ context.Context, _ int64, _ ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
-	log.Error(err.Error())
 	return
 }
 

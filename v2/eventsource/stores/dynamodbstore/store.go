@@ -82,7 +82,7 @@ func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (
 	addTimestampOnScan(&scanInput, queryOpts.timestamp)
 	addFilteringOnScan(&scanInput, queryOpts.filterOptions)
 
-	var scanItems []map[string]*dynamodb.AttributeValue
+	var scanItems = make([]map[string]*dynamodb.AttributeValue, 0)
 
 	err = store.db.ScanPagesWithContext(ctx, &scanInput, func(output *dynamodb.ScanOutput, lastPage bool) bool {
 		scanItems = append(scanItems, output.Items...)

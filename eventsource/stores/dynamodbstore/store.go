@@ -2,15 +2,13 @@ package dynamodbstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/SKF/go-eventsource/eventsource"
 )
 
 type store struct {
@@ -50,33 +48,24 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (re
 
 	err = dynamodbattribute.UnmarshalListOfMaps(output.Items, &records)
 	if err != nil {
-		log.
-			WithField("error", err).
-			Error("Couldn't unmarshal list of maps")
-		err = errors.Wrap(err, "couldn't unmarshal list of maps")
+		err = fmt.Errorf("couldn't unmarshal list of maps: %w", err)
 		return
 	}
 
 	return records, err
 }
 
-// LoadBySequenceID ...
-func (store *store) LoadBySequenceID(ctx context.Context, sequenceID string, limit int) (records []eventsource.Record, err error) {
+func (store *store) LoadBySequenceID(_ context.Context, _ string, _ int) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
-	log.Error(err.Error())
 	return
 }
 
-// LoadBySequenceIDAndType ...
-func (store *store) LoadBySequenceIDAndType(ctx context.Context, sequenceID string, eventType string, limit int) (records []eventsource.Record, err error) {
+func (store *store) LoadBySequenceIDAndType(_ context.Context, _ string, _ string, _ int) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
-	log.Error(err.Error())
 	return
 }
 
-// LoadByTimestamp
-func (store *store) LoadByTimestamp(ctx context.Context, timestamp int64, limit int) (records []eventsource.Record, err error) {
+func (store *store) LoadByTimestamp(_ context.Context, _ int64, _ int) (records []eventsource.Record, err error) {
 	err = errors.New("operation not supported on DynamoDB")
-	log.Error(err.Error())
 	return
 }

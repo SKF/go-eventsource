@@ -26,7 +26,7 @@ func New(db *dynamodb.DynamoDB, tableName string) eventsource.Store {
 	}
 }
 
-//LoadByAggregate ...
+// LoadByAggregate ...
 func (store *store) LoadByAggregate(ctx context.Context, aggregateID string) (records []eventsource.Record, err error) {
 	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{

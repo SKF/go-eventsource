@@ -76,6 +76,16 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 		err = errors.Wrap(err, "errors returned from sql store")
 		return records, err
 	}
+	defer func() {
+		if errClose := rows.Close(); errClose != nil {
+			if err != nil {
+				err = errors.Wrapf(err, "failed to close rows statement: %s", errClose)
+			} else {
+				err = errors.Wrap(errClose, "failed to close rows statement")
+			}
+		}
+	}()
+
 	return records, err
 }
 

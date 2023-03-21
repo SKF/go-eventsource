@@ -79,3 +79,9 @@ type Serializer interface {
 ### UUID Compatibility
 You might have to enable compatibility with our internal UUID package using an after-connect handler
 - https://github.com/SKF/go-utility/tree/master/v2/pgxcompat
+
+## Linting
+
+see version in [golangci-lint.yml](.github/workflows/golangci-lint.yml)
+
+docker run --rm -v $(pwd):/app -w /app golangci/golangci-lint:v1.51 golangci-lint run -v

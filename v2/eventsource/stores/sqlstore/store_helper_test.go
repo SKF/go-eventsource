@@ -103,7 +103,7 @@ func randomTableName() string {
 	letters := []rune("abcdefghijklmnopqrstuvwxyz")
 	tableName := make([]rune, numChars)
 
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for i := 0; i < numChars; i++ {
 		tableName[i] = letters[rand.Intn(len(letters))] // nolint:gosec

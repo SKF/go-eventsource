@@ -237,7 +237,7 @@ func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggreg
 
 		err = aggr.On(ctx, event)
 
-		if err == ErrDeleted {
+		if errors.Is(err, ErrDeleted) {
 			return true, nil
 		}
 

@@ -25,6 +25,16 @@ func (store *store) NewTransaction(ctx context.Context, records ...eventsource.R
 		return nil, errors.Wrap(err, "failed to prepare query")
 	}
 
+	defer func() {
+		if errClose := stmt.Close(); errClose != nil {
+			if err != nil {
+				err = errors.Wrapf(err, "failed to close stmt statement: %s", errClose)
+			} else {
+				err = errors.Wrap(errClose, "failed to close stmt statement")
+			}
+		}
+	}()
+
 	for _, record := range records {
 		_, err = stmt.ExecContext(ctx, record.AggregateID, record.SequenceID, record.Timestamp, record.UserID, record.Type, record.Data)
 		if err != nil {

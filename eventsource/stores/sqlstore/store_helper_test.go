@@ -8,13 +8,14 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/SKF/go-eventsource/eventsource"
 	"github.com/SKF/go-utility/v2/uuid"
+
+	"github.com/SKF/go-eventsource/eventsource"
 )
 
 func randomTableName() string {
 	numChars := 30
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	tableName := make([]rune, numChars)
 	for i := 0; i < numChars; i++ {

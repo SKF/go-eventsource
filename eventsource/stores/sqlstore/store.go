@@ -46,13 +46,7 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 		return
 	}
 	defer func() {
-		if errClose := stmt.Close(); errClose != nil {
-			if err != nil {
-				err = errors.Wrapf(err, "failed to close sql statement: %s", errClose)
-			} else {
-				err = errors.Wrap(errClose, "failed to close sql statement")
-			}
-		}
+		err = OnClose(stmt, "stmt", err)
 	}()
 
 	rows, err := stmt.QueryContext(ctx, args...)
@@ -77,16 +71,27 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 		return records, err
 	}
 	defer func() {
-		if errClose := rows.Close(); errClose != nil {
-			if err != nil {
-				err = errors.Wrapf(err, "failed to close rows statement: %s", errClose)
-			} else {
-				err = errors.Wrap(errClose, "failed to close rows statement")
-			}
-		}
+		err = OnClose(rows, "rows", err)
 	}()
 
 	return records, err
+}
+
+type Closer interface {
+	Close() error
+}
+
+func OnClose(object Closer, msg string, err error) error {
+	if object != nil {
+		if errClose := object.Close(); errClose != nil {
+			if err != nil {
+				err = errors.Wrapf(err, "failed to close "+msg+" statement: %s", errClose)
+			} else {
+				err = errors.Wrap(errClose, "failed to close "+msg+" statement")
+			}
+		}
+	}
+	return err
 }
 
 // Load ...

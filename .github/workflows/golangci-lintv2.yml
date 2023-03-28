@@ -25,7 +25,6 @@ jobs:
           # Optional: working directory, useful for monorepos
           working-directory: v2
 
-
           # Optional: golangci-lint command line arguments.
           # args: --issues-exit-code=0
 

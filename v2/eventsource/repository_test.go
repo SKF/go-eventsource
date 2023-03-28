@@ -409,4 +409,3 @@ func TestSaveTransaction_TimestampZero(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEqual(t, 0, event.Timestamp)
 }
-

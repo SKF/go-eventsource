@@ -8,8 +8,8 @@ import (
 )
 
 type store struct {
-	Data map[string][]eventsource.Record
-	mutex  sync.RWMutex
+	Data  map[string][]eventsource.Record
+	mutex sync.RWMutex
 }
 
 // New creates a new event store

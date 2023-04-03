@@ -91,8 +91,8 @@ type serializer struct{}
 
 func (s *serializer) Unmarshal(data []byte, eventType string) (event eventsource.Event, err error) {
 	return &eventsource.BaseEvent{}, nil
-
 }
+
 func (s *serializer) Marshal(event eventsource.Event) (data []byte, err error) {
 	return nil, nil
 }

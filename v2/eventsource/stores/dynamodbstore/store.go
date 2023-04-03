@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/SKF/go-eventsource/v2/eventsource"
-	"github.com/SKF/go-utility/v2/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+	"github.com/SKF/go-eventsource/v2/eventsource"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 type store struct {
@@ -27,7 +28,7 @@ func New(db *dynamodb.DynamoDB, tableName string) eventsource.Store {
 	}
 }
 
-//LoadByAggregate ...
+// LoadByAggregate ...
 func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opts ...eventsource.QueryOption) (records []eventsource.Record, err error) {
 	records = []eventsource.Record{}
 	key := map[string]*dynamodb.AttributeValue{
@@ -82,7 +83,7 @@ func (store *store) Load(ctx context.Context, opts ...eventsource.QueryOption) (
 	addTimestampOnScan(&scanInput, queryOpts.timestamp)
 	addFilteringOnScan(&scanInput, queryOpts.filterOptions)
 
-	var scanItems = make([]map[string]*dynamodb.AttributeValue, 0)
+	scanItems := make([]map[string]*dynamodb.AttributeValue, 0)
 
 	err = store.db.ScanPagesWithContext(ctx, &scanInput, func(output *dynamodb.ScanOutput, lastPage bool) bool {
 		scanItems = append(scanItems, output.Items...)

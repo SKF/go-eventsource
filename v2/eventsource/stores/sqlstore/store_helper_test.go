@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
-	"github.com/SKF/go-utility/env"
+	"github.com/SKF/go-utility/v2/env"
 	"github.com/SKF/go-utility/v2/pgxcompat"
 	"github.com/SKF/go-utility/v2/uuid"
 )

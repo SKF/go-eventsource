@@ -1,5 +1,5 @@
-github.com/SKF/go-utility/v2 v2.33.4 h1:M/k7ohM6+CT3NifbbfTVSHuKb1ncQOMJ5ICbxVJMWH4=
-github.com/SKF/go-utility/v2 v2.33.4/go.mod h1:GudbcjSRIxismXnF93H6dugQ+49AN2pstypJi+7cJu8=
+github.com/SKF/go-utility/v2 v2.33.5 h1:2dC9/aKS1p6xqo0X/9pt1RS7e6FLz3vM2uowBmM8fKY=
+github.com/SKF/go-utility/v2 v2.33.5/go.mod h1:M67Lwg9M+SQAGl+SDwaAlINq9LLisrxbFKH93QJA55g=
 github.com/aws/aws-sdk-go v1.44.249 h1:UbUvh/oYHdAD3vZjNi316M0NIupJsrqAcJckVuhaCB8=
 github.com/aws/aws-sdk-go v1.44.249/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=

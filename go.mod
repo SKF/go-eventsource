@@ -3,7 +3,7 @@ module github.com/SKF/go-eventsource
 go 1.19
 
 require (
-	github.com/SKF/go-utility/v2 v2.33.4
+	github.com/SKF/go-utility/v2 v2.33.5
 	github.com/aws/aws-sdk-go v1.44.249
 	github.com/lib/pq v1.10.8
 	github.com/oklog/ulid v1.3.1

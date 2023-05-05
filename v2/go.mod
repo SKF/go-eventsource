@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/SKF/go-utility/v2 v2.33.4
-	github.com/aws/aws-sdk-go v1.44.249
+	github.com/aws/aws-sdk-go v1.44.257
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.1

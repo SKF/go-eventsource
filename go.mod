@@ -1,3 +1,4 @@
+// Deprecated: Please use github.com/SKF/go-eventsource/v2 instead.
 module github.com/SKF/go-eventsource
 
 go 1.19

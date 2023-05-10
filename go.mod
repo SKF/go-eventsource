@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/SKF/go-utility/v2 v2.33.4
-	github.com/aws/aws-sdk-go v1.44.249
+	github.com/aws/aws-sdk-go v1.44.260
 	github.com/lib/pq v1.10.8
 	github.com/oklog/ulid v1.3.1
 	github.com/pkg/errors v0.9.1

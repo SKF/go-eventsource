@@ -24,8 +24,8 @@ github.com/SKF/go-enlight-middleware v0.8.4 h1:zMQW8B/1aDzCKjIndjjKF3Aj7RZqteygI
 github.com/SKF/go-enlight-middleware v0.8.4/go.mod h1:WOYrp5saxf0Q2MXLDMNHr9NKqVBD45BKNdaGbB2NM7c=
 github.com/SKF/go-utility/v2 v2.33.11 h1:3LJHV+76Imcmfn/xNs5liSeoZEUUow33QOD2B56O2bw=
 github.com/SKF/go-utility/v2 v2.33.11/go.mod h1:Rn50YoDG+5Gqba5Y06eEXINb3BEEtLf5uPHY7Hbm8sM=
-github.com/aws/aws-sdk-go v1.44.330 h1:kO41s8I4hRYtWSIuMc/O053wmEGfMTT8D4KtPSojUkA=
-github.com/aws/aws-sdk-go v1.44.330/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
+github.com/aws/aws-sdk-go v1.45.0 h1:qoVOQHuLacxJMO71T49KeE70zm+Tk3vtrl7XO4VUPZc=
+github.com/aws/aws-sdk-go v1.45.0/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/benbjohnson/clock v1.3.0 h1:ip6w0uFQkncKQ979AypyG0ER7mqUSBdKLOgAle/AT8A=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=

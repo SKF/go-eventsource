@@ -20,10 +20,10 @@ github.com/Microsoft/go-winio v0.5.0/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpz
 github.com/Microsoft/go-winio v0.5.1/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
 github.com/Microsoft/go-winio v0.5.2 h1:a9IhgEQBCUEk6QCdml9CiJGhAws+YwffDHEMp1VMrpA=
 github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
-github.com/SKF/go-enlight-middleware v0.8.4 h1:zMQW8B/1aDzCKjIndjjKF3Aj7RZqteygIkISQZkw6xA=
-github.com/SKF/go-enlight-middleware v0.8.4/go.mod h1:WOYrp5saxf0Q2MXLDMNHr9NKqVBD45BKNdaGbB2NM7c=
-github.com/SKF/go-utility/v2 v2.33.11 h1:3LJHV+76Imcmfn/xNs5liSeoZEUUow33QOD2B56O2bw=
-github.com/SKF/go-utility/v2 v2.33.11/go.mod h1:Rn50YoDG+5Gqba5Y06eEXINb3BEEtLf5uPHY7Hbm8sM=
+github.com/SKF/go-enlight-middleware v0.8.5 h1:+23yE50gKVNrodQVoWbNcvV5zYWgfHAIFF1rUhjEK6Y=
+github.com/SKF/go-enlight-middleware v0.8.5/go.mod h1:OygaLyG8KsPuDMq3Tfu10S5Yd0chZGshdcpWwB5pBZU=
+github.com/SKF/go-utility/v2 v2.33.12 h1:uuTj+p5VaRHxP+Q0ZO6a2XpLnBisoOCZixwNtpJRxcw=
+github.com/SKF/go-utility/v2 v2.33.12/go.mod h1:07lnd+OTNYPd0wGj0J1NQaJkjeSX6xBu4JLkR1SCF+g=
 github.com/aws/aws-sdk-go v1.45.12 h1:+bKbbesGNPp+TeGrcqfrWuZoqcIEhjwKyBMHQPp80Jo=
 github.com/aws/aws-sdk-go v1.45.12/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8Phjh7fkwI=
 github.com/benbjohnson/clock v1.3.0 h1:ip6w0uFQkncKQ979AypyG0ER7mqUSBdKLOgAle/AT8A=
@@ -89,8 +89,8 @@ github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/
 github.com/google/pprof v0.0.0-20230509042627-b1315fad0c5a h1:PEOGDI1kkyW37YqPWHLHc+D20D9+87Wt12TCcfTUo5Q=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
-github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.3.1 h1:KjJaJ9iWZ3jOFZIf1Lqf4laDRCasjl0BCmnEGxkdLb4=
+github.com/google/uuid v1.3.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/jackc/chunkreader v1.0.0/go.mod h1:RT6O25fNZIuasFJRyZ4R/Y2BbhasbmZXF9QQ7T3kePo=
 github.com/jackc/chunkreader/v2 v2.0.0/go.mod h1:odVSm741yZoC3dpHEUXIqA9tQRhFrgOHwnPIn9lDKlk=
 github.com/jackc/chunkreader/v2 v2.0.1 h1:i+RDz65UE+mmpjTfyz0MoVTnzeYxroil2G82ki7MGG8=

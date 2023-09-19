@@ -3,7 +3,7 @@ module github.com/SKF/go-eventsource/v2
 go 1.19
 
 require (
-	github.com/SKF/go-utility/v2 v2.33.11
+	github.com/SKF/go-utility/v2 v2.33.12
 	github.com/aws/aws-sdk-go v1.45.12
 	github.com/jackc/pgconn v1.14.1
 	github.com/jackc/pgtype v1.14.0
@@ -23,13 +23,13 @@ require (
 	github.com/DataDog/go-tuf v1.0.1-0.5.2 // indirect
 	github.com/DataDog/sketches-go v1.4.1 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/SKF/go-enlight-middleware v0.8.4 // indirect
+	github.com/SKF/go-enlight-middleware v0.8.5 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ebitengine/purego v0.5.0-alpha // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

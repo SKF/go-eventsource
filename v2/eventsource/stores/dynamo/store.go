@@ -61,7 +61,6 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 	}
 
 	return records, nil
-
 }
 
 // Load will load records based on specified query options

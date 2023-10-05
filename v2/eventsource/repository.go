@@ -129,12 +129,12 @@ func (repo *repository) AddNotificationService(service NotificationService) {
 // Record is a store row. The Data field contains the marshalled Event, and
 // Type is the type of event retrieved by reflect.TypeOf(event).
 type Record struct {
-	AggregateID string `json:"aggregateId"`
-	SequenceID  string `json:"sequenceId"`
-	Timestamp   int64  `json:"timestamp"`
-	Type        string `json:"type"`
-	Data        []byte `json:"data"`
-	UserID      string `json:"userId"`
+	AggregateID string `json:"aggregateId" dynamodbav:"aggregateId"`
+	SequenceID  string `json:"sequenceId" dynamodbav:"sequenceId"`
+	Type        string `json:"type" dynamodbav:"type"`
+	UserID      string `json:"userId" dynamodbav:"userId"`
+	Data        []byte `json:"data" dynamodbav:"data"`
+	Timestamp   int64  `json:"timestamp" dynamodbav:"timestamp"`
 }
 
 type repository struct {

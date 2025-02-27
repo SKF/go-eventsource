@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
-	"github.com/SKF/go-utility/log"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 type store struct {

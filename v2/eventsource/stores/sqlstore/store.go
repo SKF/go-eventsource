@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -50,13 +51,7 @@ func NewPgx(db driver.PgxPool, tableName string) PGXStore {
 }
 
 func columnExist(key column) bool {
-	for _, column := range columns {
-		if key == column {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(columns, key)
 }
 
 func (s *store) WithPostgresNotify() PGXStore {
@@ -71,18 +66,17 @@ func (s *store) NewTransaction(ctx context.Context, records ...eventsource.Recor
 	return s.db.NewTransaction(ctx, fmt.Sprintf(saveSQL, s.tableName), records...) // nolint:wrapcheck
 }
 
-func (s *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (returnedQuery string, args []interface{}, err error) {
+func (s *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (string, []any, error) {
 	fullQuery := []string{fmt.Sprintf(query, s.tableName)}
 	opts := evaluateQueryOptions(queryOpts)
 
+	var args []any
 	if len(opts.where) > 0 {
 		whereStatements := make([]string, 0, len(opts.where))
 
 		for key, data := range opts.where {
 			if !columnExist(key) {
-				err = errors.Errorf("column '%s' cannot be applied to", key)
-
-				return
+				return "", args, errors.Errorf("column '%s' cannot be applied to", key)
 			}
 
 			args = append(args, data.value)
@@ -107,9 +101,7 @@ func (s *store) buildQuery(queryOpts []eventsource.QueryOption, query string) (r
 		fullQuery = append(fullQuery, fmt.Sprintf("OFFSET %d", *opts.offset))
 	}
 
-	returnedQuery = strings.Join(fullQuery, " ")
-
-	return returnedQuery, args, nil
+	return strings.Join(fullQuery, " "), args, nil
 }
 
 func (s *store) fetchRecords(ctx context.Context, queryOpts []eventsource.QueryOption, query string) (records []eventsource.Record, err error) {

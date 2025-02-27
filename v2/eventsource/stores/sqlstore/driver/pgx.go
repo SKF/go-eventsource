@@ -20,7 +20,8 @@ type PGX struct {
 	NotificationChannel *string
 }
 
-func (pgx *PGX) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {
+func (pgx *PGX) Load(ctx context.Context, query string, args []interface{}) ([]eventsource.Record, error) {
+	records := []eventsource.Record{}
 	rows, err := pgx.DB.Query(ctx, query, args...)
 	if err != nil {
 		return records, errors.Wrap(err, "failed to load events using pgx")
@@ -38,9 +39,7 @@ func (pgx *PGX) Load(ctx context.Context, query string, args []interface{}) (rec
 			&aggregateID, &record.SequenceID, &record.Timestamp,
 			&userID, &record.Type, &record.Data,
 		); err != nil {
-			err = errors.Wrap(err, "failed to scan sql row")
-
-			return
+			return records, errors.Wrap(err, "failed to scan sql row")
 		}
 
 		record.AggregateID = aggregateID.String()
@@ -50,9 +49,7 @@ func (pgx *PGX) Load(ctx context.Context, query string, args []interface{}) (rec
 	}
 
 	if err = rows.Err(); err != nil {
-		err = errors.Wrap(err, "errors returned from sql store")
-
-		return
+		return records, errors.Wrap(err, "errors returned from sql store")
 	}
 
 	return records, err

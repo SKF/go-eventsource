@@ -46,7 +46,6 @@ linters:
     - cyclop # : checks function and package cyclomatic complexity [fast: false, auto-fix: false]
     # - deadcode # [deprecated]: Finds unused code [fast: false, auto-fix: false]
     - decorder #: check declaration order and count of types, constants, variables and functions [fast: true, auto-fix: false]
-    - depguard #: Go linter that checks if package imports are in a list of acceptable packages [fast: true, auto-fix: false]
     - dogsled #: Checks assignments with too many blank identifiers (e.g. x, _, _, _, := f()) [fast: true, auto-fix: false]
     - dupl #: Tool for code clone detection [fast: true, auto-fix: false]
     - dupword #: checks for duplicate words in the source code [fast: true, auto-fix: true]

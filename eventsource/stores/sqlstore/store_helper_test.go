@@ -14,7 +14,7 @@ import (
 
 func randomTableName() string {
 	numChars := 30
-	rand.Seed(time.Now().UnixNano())
+
 	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	tableName := make([]rune, numChars)
 	for i := 0; i < numChars; i++ {

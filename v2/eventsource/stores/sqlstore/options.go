@@ -30,8 +30,8 @@ type whereOpt struct {
 type options struct {
 	limit      *int
 	offset     *int
-	descending bool
 	where      map[column]whereOpt
+	descending bool
 }
 
 // WithLimit will limit the result.

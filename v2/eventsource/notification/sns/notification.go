@@ -4,31 +4,21 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/aws/aws-sdk-go-v2/service/sns/types"
 
 	"github.com/SKF/go-eventsource/v2/eventsource"
 )
 
 type snsNotification struct {
+	sns      *sns.Client
 	topicARN string
-	sns      *sns.SNS
-}
-
-// New connection to the given SNS topic ARN.
-func New(topicARN string) eventsource.NotificationService {
-	return NewWithSession(topicARN, session.Must(session.NewSession()))
-}
-
-// New connection to the given SNS topic ARN, using the provided session.
-func NewWithSession(topicARN string, sess *session.Session) eventsource.NotificationService {
-	return &snsNotification{topicARN, sns.New(sess)}
 }
 
 // New connection to the given SNS topic ARN, using the provided SNS client.
-func NewWithClient(topicARN string, client *sns.SNS) eventsource.NotificationService {
-	return &snsNotification{topicARN, client}
+func NewWithClient(topicARN string, client *sns.Client) eventsource.NotificationService {
+	return &snsNotification{topicARN: topicARN, sns: client}
 }
 
 func (sn *snsNotification) Send(record eventsource.Record) error {
@@ -44,7 +34,7 @@ func (sn *snsNotification) SendWithContext(ctx context.Context, record eventsour
 	input := sns.PublishInput{
 		TopicArn: &sn.topicARN,
 		Message:  aws.String(string(data)),
-		MessageAttributes: map[string]*sns.MessageAttributeValue{
+		MessageAttributes: map[string]types.MessageAttributeValue{
 			"SKF.Hierarchy.EventType": {
 				DataType:    aws.String("String"),
 				StringValue: aws.String(record.Type),
@@ -56,7 +46,7 @@ func (sn *snsNotification) SendWithContext(ctx context.Context, record eventsour
 		},
 	}
 
-	_, err = sn.sns.PublishWithContext(ctx, &input)
+	_, err = sn.sns.Publish(ctx, &input)
 
 	return err
 }

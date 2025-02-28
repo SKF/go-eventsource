@@ -32,7 +32,7 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 	}
 }
 
-func (store *store) fetchRecords(ctx context.Context, query string, limit int, args ...interface{}) (records []eventsource.Record, err error) {
+func (store *store) fetchRecords(ctx context.Context, query string, limit int, args ...interface{}) ([]eventsource.Record, error) {
 	var limitStr string
 	if limit == 0 {
 		limitStr = "ALL"
@@ -40,11 +40,13 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 		limitStr = strconv.Itoa(limit)
 	}
 
+	records := []eventsource.Record{}
 	stmt, err := store.db.PrepareContext(ctx, fmt.Sprintf(query, store.tablename, limitStr))
 	if err != nil {
 		err = errors.Wrap(err, "failed to prepare sql query")
-		return
+		return records, err
 	}
+
 	defer func() {
 		if errClose := stmt.Close(); errClose != nil {
 			if err != nil {
@@ -58,8 +60,9 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute sql query")
-		return
+		return records, err
 	}
+
 	for rows.Next() {
 		var record eventsource.Record
 		if err = rows.Scan(
@@ -67,7 +70,7 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 			&record.UserID, &record.Type, &record.Data,
 		); err != nil {
 			err = errors.Wrap(err, "failed to scan sql row")
-			return
+			return records, err
 		}
 		records = append(records, record)
 	}
@@ -76,6 +79,7 @@ func (store *store) fetchRecords(ctx context.Context, query string, limit int, a
 		err = errors.Wrap(err, "errors returned from sql store")
 		return records, err
 	}
+
 	return records, err
 }
 

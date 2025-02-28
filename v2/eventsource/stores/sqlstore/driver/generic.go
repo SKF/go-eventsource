@@ -13,7 +13,9 @@ type Generic struct {
 	DB *sql.DB
 }
 
-func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {
+func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{}) ([]eventsource.Record, error) {
+	records := []eventsource.Record{}
+
 	stmt, err := dwWrap.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return records, errors.Wrap(err, "failed to prepare sql query")
@@ -33,7 +35,7 @@ func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute sql query")
 
-		return
+		return records, err
 	}
 	defer rows.Close()
 
@@ -45,7 +47,7 @@ func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{
 		); err != nil {
 			err = errors.Wrap(err, "failed to scan sql row")
 
-			return
+			return records, err
 		}
 
 		records = append(records, record)
@@ -54,7 +56,7 @@ func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{
 	if err = rows.Err(); err != nil {
 		err = errors.Wrap(err, "errors returned from sql store")
 
-		return
+		return records, err
 	}
 
 	return records, err

@@ -253,7 +253,7 @@ func (repo *repository) SaveTransaction(ctx context.Context, events ...Event) (S
 }
 
 // Load rehydrates the repo
-func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggregate) (bool, error) {
+func (repo repository) Load(ctx context.Context, aggregateID string, aggr Aggregate) (deleted bool, err error) {
 	history, err := repo.store.LoadByAggregate(ctx, aggregateID)
 	if err != nil {
 		return false, err
@@ -297,18 +297,19 @@ func (repo repository) UnmarshalRecords(records []Record) ([]Event, error) {
 	return unmarshalRecords(repo.serializer, records)
 }
 
-func unmarshalRecords(serializer Serializer, records []Record) ([]Event, error) {
-	events := make([]Event, 0, len(records))
+func unmarshalRecords(serializer Serializer, records []Record) (events []Event, err error) {
 	for _, record := range records {
-		event, err := serializer.Unmarshal(record.Data, record.Type)
-		if err != nil {
-			return events, errors.Wrap(err, "failed to unmarshal record")
+		var event Event
+
+		if event, err = serializer.Unmarshal(record.Data, record.Type); err != nil {
+			err = errors.Wrap(err, "failed to unmarshal record")
+			return
 		}
 
 		events = append(events, event)
 	}
 
-	return events, nil
+	return
 }
 
 func (repo repository) LoadEvents(ctx context.Context, opts ...QueryOption) (events []Event, err error) {

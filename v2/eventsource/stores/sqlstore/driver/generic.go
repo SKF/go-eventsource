@@ -13,8 +13,7 @@ type Generic struct {
 	DB *sql.DB
 }
 
-func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{}) ([]eventsource.Record, error) {
-	records := []eventsource.Record{}
+func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{}) (records []eventsource.Record, err error) {
 	stmt, err := dwWrap.DB.PrepareContext(ctx, query)
 	if err != nil {
 		return records, errors.Wrap(err, "failed to prepare sql query")
@@ -32,7 +31,9 @@ func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{
 
 	rows, err := stmt.QueryContext(ctx, args...)
 	if err != nil {
-		return records, errors.Wrap(err, "failed to execute sql query")
+		err = errors.Wrap(err, "failed to execute sql query")
+
+		return
 	}
 	defer rows.Close()
 
@@ -42,17 +43,21 @@ func (dwWrap *Generic) Load(ctx context.Context, query string, args []interface{
 			&record.AggregateID, &record.SequenceID, &record.Timestamp,
 			&record.UserID, &record.Type, &record.Data,
 		); err != nil {
-			return records, errors.Wrap(err, "failed to scan sql row")
+			err = errors.Wrap(err, "failed to scan sql row")
+
+			return
 		}
 
 		records = append(records, record)
 	}
 
 	if err = rows.Err(); err != nil {
-		return records, errors.Wrap(err, "errors returned from sql store")
+		err = errors.Wrap(err, "errors returned from sql store")
+
+		return
 	}
 
-	return records, nil
+	return records, err
 }
 
 func (dwWrap *Generic) NewTransaction(ctx context.Context, query string, records ...eventsource.Record) (eventsource.StoreTransaction, error) {

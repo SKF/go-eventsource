@@ -103,7 +103,9 @@ func randomTableName() string {
 	letters := []rune("abcdefghijklmnopqrstuvwxyz")
 	tableName := make([]rune, numChars)
 
-	for i := range numChars {
+	rand.Seed(time.Now().UnixNano())
+
+	for i := 0; i < numChars; i++ {
 		tableName[i] = letters[rand.Intn(len(letters))] // nolint:gosec
 	}
 
@@ -125,10 +127,10 @@ func createTableQuery() (tableName, query string) {
 }
 
 // createTestEvents - create some random test events in sequence.
-func createTestEvents(store eventsource.Store, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) ([]eventsource.Record, error) {
-	result := []eventsource.Record{}
+func createTestEvents(store eventsource.Store, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
+	result = []eventsource.Record{}
 
-	for i := range numberOfEvents {
+	for i := 0; i < numberOfEvents; i++ {
 		aggID := uuid.New()
 		userID := uuid.New()
 		eventType := fmt.Sprintf("TestEvent %d", i+1)
@@ -137,7 +139,7 @@ func createTestEvents(store eventsource.Store, numberOfEvents int, eventTypeList
 			eventType = eventTypeList[i]
 		}
 
-		eventData := fmt.Appendf([]byte{}, "TestEventData %d", i+1)
+		eventData := []byte(fmt.Sprintf("TestEventData %d", i+1))
 		if i < len(eventDataList) {
 			eventData = eventDataList[i]
 		}
@@ -151,20 +153,21 @@ func createTestEvents(store eventsource.Store, numberOfEvents int, eventTypeList
 			Data:        eventData,
 		}
 
-		tx, err := store.NewTransaction(ctx, event)
-		if err != nil {
-			return nil, err
+		var tx eventsource.StoreTransaction
+
+		if tx, err = store.NewTransaction(ctx, event); err != nil {
+			return
 		}
 
 		if err = tx.Commit(); err != nil {
-			return nil, err
+			return
 		}
 
 		var records []eventsource.Record
 
 		records, err = store.LoadByAggregate(ctx, aggID.String())
 		if err != nil {
-			return nil, err
+			return
 		}
 
 		if len(records) != 1 {

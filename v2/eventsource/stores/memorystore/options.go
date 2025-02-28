@@ -19,8 +19,8 @@ var defaultOptions = &options{
 
 type options struct {
 	sorter  func(records []eventsource.Record)
-	filters []FilterFunc
 	limit   *int
+	filters []FilterFunc
 }
 
 // WithLimit will limit the result

@@ -12,13 +12,13 @@ import (
 )
 
 type snsNotification struct {
-	topicARN string
 	sns      *sns.Client
+	topicARN string
 }
 
 // New connection to the given SNS topic ARN, using the provided SNS client.
 func NewWithClient(topicARN string, client *sns.Client) eventsource.NotificationService {
-	return &snsNotification{topicARN, client}
+	return &snsNotification{topicARN: topicARN, sns: client}
 }
 
 func (sn *snsNotification) Send(record eventsource.Record) error {

@@ -103,10 +103,10 @@ func (repo *repository) SetNotificationService(ns NotificationService) {
 type Record struct {
 	AggregateID string `json:"aggregateId"`
 	SequenceID  string `json:"sequenceId"`
-	Timestamp   int64  `json:"timestamp"`
 	Type        string `json:"type"`
-	Data        []byte `json:"data"`
 	UserID      string `json:"userId"`
+	Data        []byte `json:"data"`
+	Timestamp   int64  `json:"timestamp"`
 }
 
 type repository struct {

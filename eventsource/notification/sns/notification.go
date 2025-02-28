@@ -11,8 +11,8 @@ import (
 )
 
 type snsNotification struct {
-	topicARN string
 	sns      *sns.SNS
+	topicARN string
 }
 
 // NewSNSNotificationService connection to the given SNS topic ARN
@@ -20,7 +20,7 @@ func NewSNSNotificationService(topicARN string) eventsource.NotificationService 
 	snsClient := sns.New(
 		session.Must(session.NewSession()),
 	)
-	return &snsNotification{topicARN, snsClient}
+	return &snsNotification{topicARN: topicARN, sns: snsClient}
 }
 
 func (sn *snsNotification) SendNotification(record eventsource.Record) error {
@@ -37,5 +37,6 @@ func (sn *snsNotification) SendNotification(record eventsource.Record) error {
 	if _, err = sn.sns.Publish(&input); err != nil {
 		return err
 	}
+
 	return nil
 }

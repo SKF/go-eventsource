@@ -14,7 +14,7 @@ import (
 
 func randomTableName() string {
 	numChars := 30
-	rand.Seed(time.Now().UnixNano())
+
 	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	tableName := make([]rune, numChars)
 	for i := 0; i < numChars; i++ {
@@ -37,8 +37,8 @@ func createTable(db *sql.DB) (tableName string, err error) {
 }
 
 // createTestEvents - create some random test events in sequence
-func createTestEvents(db *sql.DB, tableName string, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) (result []eventsource.Record, err error) {
-	result = []eventsource.Record{}
+func createTestEvents(db *sql.DB, tableName string, numberOfEvents int, eventTypeList []string, eventDataList [][]byte) ([]eventsource.Record, error) {
+	result := []eventsource.Record{}
 
 	store := New(db, tableName)
 
@@ -65,32 +65,34 @@ func createTestEvents(db *sql.DB, tableName string, numberOfEvents int, eventTyp
 
 		ctx := context.Background()
 
-		var tx eventsource.StoreTransaction
-		if tx, err = store.NewTransaction(ctx, event); err != nil {
-			return
+		tx, err := store.NewTransaction(ctx, event)
+		if err != nil {
+			return result, err
 		}
 
 		if err = tx.Commit(); err != nil {
-			return
+			return result, err
 		}
 
 		var records []eventsource.Record
 		records, err = store.LoadByAggregate(ctx, aggID.String())
 		if err != nil {
-			return
+			return result, err
 		}
+
 		if len(records) != 1 {
-			err = fmt.Errorf("Expected one result from store, got %d", len(records))
-			return
+			return result, fmt.Errorf("Expected one result from store, got %d", len(records))
 		}
+
 		event.SequenceID = records[0].SequenceID
 		if !reflect.DeepEqual(event, records[0]) {
-			err = fmt.Errorf("Expected identical records, saved: %v  loaded: %v", event, records[0])
-			return
+			return result, fmt.Errorf("Expected identical records, saved: %v  loaded: %v", event, records[0])
 		}
+
 		result = append(result, records[0])
 	}
-	return result, err
+
+	return result, nil
 }
 
 // deleteEvents - delete events (using the SequenceID)

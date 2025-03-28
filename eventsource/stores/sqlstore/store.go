@@ -34,7 +34,7 @@ func New(db *sql.DB, tableName string) eventsource.Store {
 
 func (store *store) fetchRecords(ctx context.Context, query string, limit int, args ...interface{}) ([]eventsource.Record, error) {
 	var limitStr string
-	if limit == 0 {
+	if limit <= 0 {
 		limitStr = "ALL"
 	} else {
 		limitStr = strconv.Itoa(limit)

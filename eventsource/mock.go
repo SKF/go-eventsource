@@ -35,7 +35,7 @@ type AggregatorMock struct {
 	Mock *mock.Mock
 }
 
-// CreateAggregatorMock returns a aggregatorMock
+// CreateAggregatorMock returns an aggregatorMock
 func CreateAggregatorMock() *AggregatorMock {
 	return &AggregatorMock{
 		Mock: &mock.Mock{},

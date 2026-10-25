@@ -47,8 +47,8 @@ func (store *store) LoadByAggregate(ctx context.Context, aggregateID string, opt
 	addTimestampToQuery(&input, queryOpts.timestamp)
 	addFilteringOnQuery(&input, queryOpts.filterOptions)
 
-	for pagniator := dynamodb.NewQueryPaginator(store.db, &input); pagniator.HasMorePages(); {
-		page, err := pagniator.NextPage(ctx)
+	for paginator := dynamodb.NewQueryPaginator(store.db, &input); paginator.HasMorePages(); {
+		page, err := paginator.NextPage(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't scan pages (input=%+v): %w", input, err)
 		}
@@ -112,7 +112,7 @@ func (store *store) LoadByTimestamp(context.Context, int64, ...eventsource.Query
 func addFilteringOnScan(scanInput *dynamodb.ScanInput, filterOption *filterOpt) {
 	if filterOption != nil {
 		if filterOption.getDynamoAttributeValue() == nil {
-			log.Warnf("Unable to add filtering on unimplmented data type: %s", filterOption.attributeType)
+			log.Warnf("Unable to add filtering on unimplemented data type: %s", filterOption.attributeType)
 			return
 		}
 
@@ -125,7 +125,7 @@ func addFilteringOnScan(scanInput *dynamodb.ScanInput, filterOption *filterOpt) 
 func addFilteringOnQuery(queryInput *dynamodb.QueryInput, filterOption *filterOpt) {
 	if filterOption != nil {
 		if filterOption.getDynamoAttributeValue() == nil {
-			log.Warnf("Unable to add filtering on unimplmented data type: %s", filterOption.attributeType)
+			log.Warnf("Unable to add filtering on unimplemented data type: %s", filterOption.attributeType)
 			return
 		}
 
